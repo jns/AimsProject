@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require "rubygems"
+require "wx"
+require "gl"
+require "glu"
+require '../lib/Aims/Aims.rb'
+require 'inspector.rb'
+require 'app_controller.rb'
+require 'crystal_viewer.rb'
+require 'viewer_controls.rb'
+require 'appearance.rb'
+
+controller = AppController.new
+
+unless __FILE__.nil?
+  cwd = File.dirname(File.expand_path("."))
+  controller.working_dir = cwd
+end
+
+controller.open_file(ARGV[0]) if ARGV[0]
+controller.main_loop
