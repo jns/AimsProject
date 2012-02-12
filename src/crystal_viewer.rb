@@ -42,7 +42,8 @@ class CrystalViewer
 
   attr_accessor :atoms_changed
 
-  def initialize
+  def initialize(controller)
+    @controller = controller
     self.current_cell = 0
     self.bond_length = 3
     self.controls = ViewerControls.new
@@ -162,6 +163,7 @@ class CrystalViewer
     return unless self.unit_cell and self.unit_cell[self.current_cell]
     self.atom = pick_object(x,y)
     if self.atom
+      @controller.select_atom(self.atom)
       puts self.atom.format_geometry_in
     end
     self.hiRes

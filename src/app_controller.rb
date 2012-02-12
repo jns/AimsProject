@@ -17,6 +17,7 @@ class AppController < Wx::App
     @menubar = nil
     @toolbar = nil
     @viewer = nil
+    @editor = nil
     @glPanel = nil
     @inspector = nil
 
@@ -31,11 +32,15 @@ class AppController < Wx::App
    def on_init
      
         self.app_name = "AimsViewer"
-        @viewer = CrystalViewer.new
+        @viewer = CrystalViewer.new(self)
         # Create the frame, toolbar and menubar and define event handlers
         size = [500,500]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
-        
+
+        # Create the split view        
+        splitter = SplitterWindow.new(@frame)
+                
+        @editor = GeometryEditor.new(self, splitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
         @toolbar = @frame.create_tool_bar
@@ -71,7 +76,7 @@ class AppController < Wx::App
 
         # Create the graphics view and define event handlers
 
-        @glPanel = GLCanvas.new(@frame, Wx::ID_ANY, Wx::DEFAULT_POSITION, size, 0, self.app_name, [GL_RGBA, GL_DOUBLEBUFFER, GL_DEPTH_SIZE, 16])
+        @glPanel = GLCanvas.new(splitter, Wx::ID_ANY, Wx::DEFAULT_POSITION, size, 0, self.app_name, [GL_RGBA, GL_DOUBLEBUFFER, GL_DEPTH_SIZE, 16])
         @glPanel.evt_paint { @glPanel.paint { render } }
 
         @glPanel.evt_mouse_events {|evt|
@@ -94,6 +99,9 @@ class AppController < Wx::App
             render
           end
         }
+        
+        # Add to split view
+        splitter.split_horizontally(@glPanel, @editor)
         
         # Check off the current tool
         set_tool
@@ -156,6 +164,10 @@ class AppController < Wx::App
      @viewer.delete_atom
    end
    
+   def select_atom(atom)
+     @editor.select_atom(atom)
+   end
+   
    # Apply UI settings to viewer and re-render
    def update_viewer
      
@@ -215,6 +227,7 @@ class AppController < Wx::App
        @original_uc = Aims::GeometryParser.parse(file)
        @frame.set_title(file)
        @viewer.unit_cell = @original_uc
+       @editor.unit_cell = @original_uc
        @inspector.update(@viewer)
        self.render
      rescue Exception => dang
