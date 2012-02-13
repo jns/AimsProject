@@ -8,7 +8,6 @@ require '../lib/Aims/Aims.rb'
 require 'inspector.rb'
 require 'app_controller.rb'
 require 'crystal_viewer.rb'
-require 'viewer_controls.rb'
 require 'appearance.rb'
 require 'geometry_editor.rb'
 

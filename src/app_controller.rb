@@ -165,7 +165,7 @@ class AppController < Wx::App
      @viewer.show_yclip = @inspector.show_yclip
      @viewer.show_zclip = @inspector.show_zclip
      
-     render
+     @viewer.draw_scene
    end
    
    # Ask the viewer to render the scene

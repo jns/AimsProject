@@ -17,7 +17,6 @@ class CrystalViewer < Wx::Panel
   attr_reader :bond_length
 
   # The keyboard actions
-  attr_accessor :controls
   attr_accessor :mouse_motion_func # a string "rotate", "pan" or "zoom"
 
   # The background color (glClearColor)
@@ -82,7 +81,6 @@ class CrystalViewer < Wx::Panel
   def set_defaults
     self.current_cell = 0
     self.bond_length = 3
-    self.controls = ViewerControls.new
     self.background = Material.new(0.7, 0.7, 1.0, 1)
     self.x_down = 0
     self.y_down = 0
@@ -293,7 +291,6 @@ class CrystalViewer < Wx::Panel
   def set_mouse_motion_function(method_name)
     self.mouse_motion_func = method_name.to_sym
   end
-
 
   def draw_scene
     @glPanel.set_current
