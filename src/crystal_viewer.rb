@@ -1,22 +1,17 @@
 
-class CrystalViewer
+class CrystalViewer < Wx::Panel
 
+  include Wx
   include Math
   include Gl
   include Glu
   include Aims
   
-  # A singleton instance for use in glut mode
-  @@instance = nil
-
   # An array of Aims::UnitCell's to display
   attr_reader :unit_cell
 
   # If displaying multiple, then the current cell
   attr_accessor :current_cell
-
-  # The Viewer Instance
-  attr_accessor :viewer
 
   # Atomic centers closer than this number have bonds drawn. 
   attr_reader :bond_length
@@ -42,13 +37,53 @@ class CrystalViewer
 
   attr_accessor :atoms_changed
 
-  def initialize(controller)
+  def initialize(controller, parent)
+
+    super(parent)
     @controller = controller
+
+    #@glPanel = CalendarCtrl.new(self)
+    attrib = [Wx::GL_RGBA, Wx::GL_DOUBLEBUFFER, Wx::GL_DEPTH_SIZE, 24]
+    @glPanel = GLCanvas.new(self, -1, [-1, -1], [-1, -1],
+                               Wx::FULL_REPAINT_ON_RESIZE, "GLCanvas", attrib)
+    vbox_sizer = VBoxSizer.new
+    vbox_sizer.add_item(@glPanel, :proportion => 1, :flag => EXPAND)
+    set_sizer(vbox_sizer)
+    
+    set_defaults
+    
+    # Define the method to call for paint requests
+    evt_paint { @glPanel.paint { draw_scene }}
+    # Create the graphics view and define event handlers
+
+    # For some reason, not all left-clicks are captured, 
+    # so we include this catchall as well, to prevent odd
+    # behavior when rotating
+    @glPanel.evt_mouse_events {|evt|
+      if evt.button_down
+        mouse_down(evt.get_x, evt.get_y)
+      end
+    }
+    
+    @glPanel.evt_left_up {|evt|
+      mouse_up(evt.get_x, evt.get_y)
+      draw_scene
+    }
+    
+    @glPanel.evt_motion {|evt|
+      if evt.dragging
+        mouse_dragged(evt.get_x, evt.get_y)
+        draw_scene
+      end
+    }
+    
+  end
+
+  def set_defaults
     self.current_cell = 0
     self.bond_length = 3
     self.controls = ViewerControls.new
     self.background = Material.new(0.7, 0.7, 1.0, 1)
-    self.viewer = self
     self.x_down = 0
     self.y_down = 0
     self.x_last = 0
@@ -76,14 +111,9 @@ class CrystalViewer
     self.atoms_changed = true
     self.hiRes
     self.mouse_motion_func = :rotate
+    
   end
 
-  def CrystalViewer.instance
-    unless @@instance
-      @@instance = CrystalViewer.new
-    end
-    @@instance	
-  end
 =begin
   Set the unit cell to display. 
 =end
@@ -308,14 +338,19 @@ class CrystalViewer
   end
 
   def draw_scene
-    self.draw_init
-    self.apply_projection
-    self.position_camera
-    self.add_lights if self.lighting
-    self.outline_supercell if self.show_supercell
-    self.draw_bonds if self.show_bonds
-    self.draw_lattice
-    self.draw_clip_planes
+    @glPanel.set_current
+    sz = @glPanel.size
+    viewport_setup(sz.width, sz.height)    
+    draw_init
+    apply_projection
+    position_camera
+    add_lights if self.lighting
+    outline_supercell if self.show_supercell
+    draw_bonds if self.show_bonds
+    draw_lattice
+    draw_clip_planes
+    
+    @glPanel.swap_buffers
   end
 
   def viewport_setup(width, height)

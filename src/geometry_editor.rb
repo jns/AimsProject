@@ -1,8 +1,12 @@
 
+require 'erb'
+
 class GeometryEditor < Wx::ScrolledWindow
   
   include Wx
   attr_accessor :app, :text_ctrl
+
+  @atom_ranges = {}
 
   def initialize(app, window)
     
@@ -10,26 +14,32 @@ class GeometryEditor < Wx::ScrolledWindow
 
     @app = app
     
-    sizer_top = BoxSizer.new(VERTICAL)
+    sizer = BoxSizer.new(VERTICAL)
 
-    self.text_ctrl = RichTextCtrl.new(self)
-    sizer_top.add(self.text_ctrl, 1, EXPAND | ALL, 5)
+    @text_ctrl = RichTextCtrl.new(self)
+    sizer.add(self.text_ctrl, 1, EXPAND | ALL, 5)
 
     set_auto_layout(true)
-    set_sizer(sizer_top)
+    set_sizer(sizer)
 
-    sizer_top.set_size_hints(self)
-    # sizer_top.fit(self)
+        
+    evt_text_enter(@text_ctrl) {|event|
+      puts get_contents
+    }
 
-    self.evt_close {|event| self.hide }
   end
   
   def unit_cell=(uc)
     @unit_cell = uc
+    
     self.text_ctrl.set_value(uc.format_geometry_in)
   end
   
   def select_atom(atom)
     self.text_ctrl.set_style(start, stop, selectionStyle)
+  end
+  
+  def get_contents
+    ERB.new(@text_ctrl.get_value).result
   end
 end

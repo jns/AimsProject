@@ -18,7 +18,6 @@ class AppController < Wx::App
     @toolbar = nil
     @viewer = nil
     @editor = nil
-    @glPanel = nil
     @inspector = nil
 
     # The original Unit Cell
@@ -32,7 +31,6 @@ class AppController < Wx::App
    def on_init
      
         self.app_name = "AimsViewer"
-        @viewer = CrystalViewer.new(self)
         # Create the frame, toolbar and menubar and define event handlers
         size = [500,500]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
@@ -41,73 +39,50 @@ class AppController < Wx::App
         splitter = SplitterWindow.new(@frame)
                 
         @editor = GeometryEditor.new(self, splitter)
+        @viewer = CrystalViewer.new(self, splitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
         @toolbar = @frame.create_tool_bar
         populate_toolbar(@toolbar) if @toolbar
-        
-        evt_menu(menubar) { |event|
-          case event.id
-          when ID_ROTATE
-            @viewer.set_mouse_motion_function(:rotate)
-          when ID_ZOOM
-            @viewer.set_mouse_motion_function(:zoom)
-          when ID_PAN
-            @viewer.set_mouse_motion_function(:pan)  
-          when ID_MOVE_CLIP_PLANE
-            @viewer.set_mouse_motion_function(:move_clip_plane)
-          when ID_INSPECTOR
-            show_inspector
-          when ID_DELETE_ATOM
-            delete_atom
-          when Wx::ID_OPEN
-            open_file
-          when Wx::ID_SAVE
-            save_geometry
-          when ID_SAVE_IMAGE
-            save_image
-          when Wx::ID_EXIT
-             exit(0)
-          else
-            event.skip
-          end
-          set_tool
-        }
-
-        # Create the graphics view and define event handlers
-
-        @glPanel = GLCanvas.new(splitter, Wx::ID_ANY, Wx::DEFAULT_POSITION, size, 0, self.app_name, [GL_RGBA, GL_DOUBLEBUFFER, GL_DEPTH_SIZE, 16])
-        @glPanel.evt_paint { @glPanel.paint { render } }
-
-        @glPanel.evt_mouse_events {|evt|
-          if evt.button_down
-            @viewer.mouse_down(evt.get_x, evt.get_y)
-          end
-        }
-        # @glPanel.evt_left_down { |evt| 
-        #   @viewer.mouse_down(evt.get_x, evt.get_y)
-        #   evt.skip
-        # }
-
-        @glPanel.evt_left_up {|evt|
-          @viewer.mouse_up(evt.get_x, evt.get_y)
-          render
-        }
-        @glPanel.evt_motion {|evt|
-          if evt.dragging
-            @viewer.mouse_dragged(evt.get_x, evt.get_y)
-            render
-          end
-        }
-        
+                
         # Add to split view
-        splitter.split_horizontally(@glPanel, @editor)
+        splitter.split_horizontally(@viewer, @editor)
         
         # Check off the current tool
         set_tool
         
         # Display
         @frame.show        
+   end
+   
+   # Process a menu event
+   def process_menu_event(event)
+     case event.id
+     when ID_ROTATE
+       @viewer.set_mouse_motion_function(:rotate)
+     when ID_ZOOM
+       @viewer.set_mouse_motion_function(:zoom)
+     when ID_PAN
+       @viewer.set_mouse_motion_function(:pan)  
+     when ID_MOVE_CLIP_PLANE
+       @viewer.set_mouse_motion_function(:move_clip_plane)
+     when ID_INSPECTOR
+       show_inspector
+     when ID_DELETE_ATOM
+       delete_atom
+     when Wx::ID_OPEN
+       open_file
+     when Wx::ID_SAVE
+       save_geometry
+     when ID_SAVE_IMAGE
+       save_image
+     when Wx::ID_EXIT
+        exit(0)
+     else
+       event.skip
+     end
+     set_tool
+     
    end
    
    # Clear then populate the toolbar
@@ -129,7 +104,7 @@ class AppController < Wx::App
      tb.realize
    end
    
-   # Return the menubar.  If it is undefined, then define it.
+   # Return the menubar.  If it is undefined, then define it and attach the event handler
    def menubar
      unless @menubar
        fileMenu = Menu.new
@@ -156,6 +131,8 @@ class AppController < Wx::App
        @menubar.append(editMenu, "Edit")
        @menubar.append(viewMenu, "Views")
        @menubar.append(toolsMenu, "Tools")
+       
+       evt_menu @menubar, :process_menu_event
      end
      @menubar
    end
@@ -192,13 +169,9 @@ class AppController < Wx::App
    end
    
    # Ask the viewer to render the scene
-   def render
-     @glPanel.set_current
-     sz = @glPanel.size
-    @viewer.viewport_setup(sz.width, sz.height)
- 		@viewer.draw_scene
-    @glPanel.swap_buffers
-   end
+   # def render
+   #   @viewer.draw_scene
+   # end
    
    # Show the inspector
    def show_inspector
@@ -229,7 +202,7 @@ class AppController < Wx::App
        @viewer.unit_cell = @original_uc
        @editor.unit_cell = @original_uc
        @inspector.update(@viewer)
-       self.render
+       @viewer.draw_scene
      rescue Exception => dang
        error_dialog(dang)
      end
@@ -285,7 +258,7 @@ class AppController < Wx::App
          @working_dir = fd.get_directory
 
        		# Read the front left buffer
-          @glPanel.set_current
+          @viewer.set_current
           pixels = @viewer.rgb_image_data
    		
        		image = Image.new(@viewer.width, @viewer.height)
