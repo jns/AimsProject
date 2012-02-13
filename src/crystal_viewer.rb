@@ -295,48 +295,6 @@ class CrystalViewer < Wx::Panel
   end
 
 
-  def key_pressed(key, x=0, y=0)
-    com = self.controls.command_for_key(key)
-    return if com.nil?
-
-    case com
-    when :dump_geometry
-      dump_geometry
-    when :top_view
-      set_view(0,0,-20, -90, 0)
-    when :north_view
-      set_view(0,0,-20, -90, 90)
-    when :east_view
-      set_view(0,0,-20, 0, 90)
-    when :bottom_view
-      set_view(0,0,-20, -90, 270)
-    when :south_view
-      set_view(0, 0, -20, -90, 180)
-    when :rotate
-      set_mouse_motion_function("rotate")
-    when :zoom
-      set_mouse_motion_function("zoom")
-    when :pan
-      set_mouse_motion_function("pan")
-    when :move_clip_plane
-      set_mouse_motion_function(:move_clip_plane)
-    when :ortho_view
-      self.orthographic = (self.orthographic ? false : true)
-      on_resize.call(self.width, self.height)
-      glutPostRedisplay if @using_glut
-    when :toggle_show_bonds
-      self.show_bonds = (not self.show_bonds)
-    when :toggle_lighting
-      self.lighting = (not self.lighting)
-    when :delete_atom
-      delete_atom
-    when :quit
-      exit(0) if @using_glut
-    else
-      puts "unrecognized command #{com}"
-    end
-  end
-
   def draw_scene
     @glPanel.set_current
     sz = @glPanel.size
