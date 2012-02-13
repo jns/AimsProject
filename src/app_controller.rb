@@ -19,6 +19,7 @@ class AppController < Wx::App
     @viewer = nil
     @editor = nil
     @inspector = nil
+    @statusbar = nil
 
     # The original Unit Cell
     @original_uc = nil
@@ -34,7 +35,8 @@ class AppController < Wx::App
         # Create the frame, toolbar and menubar and define event handlers
         size = [500,500]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
-
+        @statusbar = @frame.create_status_bar
+        
         # Create the split view        
         splitter = SplitterWindow.new(@frame)
                 
@@ -117,10 +119,10 @@ class AppController < Wx::App
        editMenu.append(ID_DELETE_ATOM, "Delete Atom\tCTRL+d")
        
        toolsMenu = Menu.new       
-       toolsMenu.append(ID_ROTATE, "rotate\tr", "Rotate", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_ZOOM, "zoom\tz", "Zoom", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_PAN, "pan\tp", "Pan", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_MOVE_CLIP_PLANE, "move cilp plane\tm", "Move", Wx::ITEM_CHECK)
+       toolsMenu.append(ID_ROTATE, "rotate", "Rotate", Wx::ITEM_CHECK)
+       toolsMenu.append(ID_ZOOM, "zoom", "Zoom", Wx::ITEM_CHECK)
+       toolsMenu.append(ID_PAN, "pan", "Pan", Wx::ITEM_CHECK)
+       toolsMenu.append(ID_MOVE_CLIP_PLANE, "move cilp plane", "Move", Wx::ITEM_CHECK)
        
        viewMenu = Menu.new
        viewMenu.append(ID_INSPECTOR, "inspector\tCTRL+i")
@@ -167,11 +169,20 @@ class AppController < Wx::App
      
      @viewer.draw_scene
    end
+
+   def update
+     begin
+       uc = Aims::GeometryParser.parse_string(@editor.get_contents)
+       @original_uc = uc
+       @viewer.unit_cell = @original_uc
+       
+       update_viewer
+       @statusbar.status_text = "Ok!"
+     rescue Exception => e 
+       @statusbar.status_text = e.message
+     end
+  end
    
-   # Ask the viewer to render the scene
-   # def render
-   #   @viewer.draw_scene
-   # end
    
    # Show the inspector
    def show_inspector

@@ -24,7 +24,7 @@ class GeometryEditor < Wx::ScrolledWindow
 
         
     evt_text_enter(@text_ctrl) {|event|
-      puts get_contents
+      @app.update
     }
 
   end
@@ -36,7 +36,7 @@ class GeometryEditor < Wx::ScrolledWindow
   end
   
   def select_atom(atom)
-    self.text_ctrl.set_style(start, stop, selectionStyle)
+    # self.text_ctrl.set_style(start, stop, selectionStyle)
   end
   
   def get_contents
