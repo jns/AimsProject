@@ -1,0 +1,79 @@
+lattice_vector 19.9185842870421 0 0
+lattice_vector 0 4.06586399182265 0
+lattice_vector 0 0 46.4319936911705
+atom         0.000000         0.000000         0.000000 Ga
+atom         2.489823         0.000000         0.000000 As
+atom         3.319764         2.032932        -1.173714 Ga
+atom         5.809587         2.032932        -1.173714 As
+atom         6.639528        -2.032932         1.173714 Ga
+atom         9.129351        -2.032932         1.173714 As
+atom         9.959292         0.000000         0.000000 Ga
+atom        12.449115         0.000000         0.000000 As
+atom        13.279056         2.032932        -1.173714 Ga
+atom        15.768879         2.032932        -1.173714 As
+atom        16.598820        -2.032932         1.173714 Ga
+atom        19.088643        -2.032932         1.173714 As
+atom         0.000000        -2.032932        -3.521142 Ga
+atom         2.489823        -2.032932        -3.521142 As
+atom         3.319764         0.000000        -4.694855 Ga
+atom         5.809587         0.000000        -4.694855 As
+atom         6.639528        -4.065864        -2.347428 Ga
+atom         9.129351        -4.065864        -2.347428 As
+atom         9.959292        -2.032932        -3.521142 Ga
+atom        12.449115        -2.032932        -3.521142 As
+atom        13.279056         0.000000        -4.694855 Ga
+atom        15.768879         0.000000        -4.694855 As
+atom        16.598820        -4.065864        -2.347428 Ga
+atom        19.088643        -4.065864        -2.347428 As
+atom         0.000000        -4.065864        -7.042283 Ga
+atom         2.489823        -4.065864        -7.042283 As
+atom         3.319764        -2.032932        -8.215997 Ga
+atom         5.809587        -2.032932        -8.215997 As
+atom         6.639528        -6.098796        -5.868569 Ga
+atom         9.129351        -6.098796        -5.868569 As
+atom         9.959292        -4.065864        -7.042283 Ga
+atom        12.449115        -4.065864        -7.042283 As
+atom        13.279056        -2.032932        -8.215997 Ga
+atom        15.768879        -2.032932        -8.215997 As
+atom        16.598820        -6.098796        -5.868569 Ga
+atom        19.088643        -6.098796        -5.868569 As
+atom         0.000000        -6.098796       -10.563425 Ga
+atom         2.489823        -6.098796       -10.563425 As
+atom         3.319764        -4.065864       -11.737138 Ga
+constrain_relaxation .true.
+atom         5.809587        -4.065864       -11.737138 As
+constrain_relaxation .true.
+atom         6.639528        -8.131728        -9.389711 Ga
+atom         9.129351        -8.131728        -9.389711 As
+atom         9.959292        -6.098796       -10.563425 Ga
+atom        12.449115        -6.098796       -10.563425 As
+atom        13.279056        -4.065864       -11.737138 Ga
+constrain_relaxation .true.
+atom        15.768879        -4.065864       -11.737138 As
+constrain_relaxation .true.
+atom        16.598820        -8.131728        -9.389711 Ga
+atom        19.088643        -8.131728        -9.389711 As
+atom         0.000000        -8.131728       -14.084566 Ga
+constrain_relaxation .true.
+atom         2.489823        -8.131728       -14.084566 As
+constrain_relaxation .true.
+atom         3.319764        -6.098796       -15.258280 Ga
+constrain_relaxation .true.
+atom         5.809587        -6.098796       -15.258280 As
+constrain_relaxation .true.
+atom         6.639528       -10.164660       -12.910852 Ga
+constrain_relaxation .true.
+atom         9.129351       -10.164660       -12.910852 As
+constrain_relaxation .true.
+atom         9.959292        -8.131728       -14.084566 Ga
+constrain_relaxation .true.
+atom        12.449115        -8.131728       -14.084566 As
+constrain_relaxation .true.
+atom        13.279056        -6.098796       -15.258280 Ga
+constrain_relaxation .true.
+atom        15.768879        -6.098796       -15.258280 As
+constrain_relaxation .true.
+atom        16.598820       -10.164660       -12.910852 Ga
+constrain_relaxation .true.
+atom        19.088643       -10.164660       -12.910852 As
+constrain_relaxation .true.

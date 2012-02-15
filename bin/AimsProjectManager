@@ -4,7 +4,7 @@ require "rubygems"
 require "wx"
 require "gl"
 require "glu"
-require '../lib/Aims/Aims.rb'
+require 'aims'
 require 'inspector.rb'
 require 'app_controller.rb'
 require 'crystal_viewer.rb'
