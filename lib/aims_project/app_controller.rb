@@ -1,4 +1,5 @@
 
+module AimsProject
 class AppController < Wx::App
   
     include Wx
@@ -91,15 +92,14 @@ class AppController < Wx::App
    def populate_toolbar(tb)
      tb.clear_tools
      
-     basedir = File.dirname(File.expand_path(__FILE__))
-     
-     rotate_icon = Image.new(File.join([basedir, "../resources", "rotate.gif"]), BITMAP_TYPE_GIF)
+     basedir = File.dirname(__FILE__)
+     rotate_icon = Image.new(File.join(basedir,"rotate.gif"), BITMAP_TYPE_GIF)
      @rotate_tool = tb.add_item(rotate_icon.rescale(16,15).convert_to_bitmap,:label => "rotate", :id => ID_ROTATE)
      
-     zoom_icon = Image.new(File.join([basedir, "../resources", "zoom.gif"]), BITMAP_TYPE_GIF)
+     zoom_icon = Image.new(File.join(basedir,"zoom.gif"), BITMAP_TYPE_GIF)
      @zoom_tool = tb.add_item(zoom_icon.rescale(16,15).convert_to_bitmap, :label => "zoom", :id => ID_ZOOM)
      
-     pan_icon = Image.new(File.join([basedir, "../resources", "pan.gif"]), BITMAP_TYPE_GIF)
+     pan_icon = Image.new(File.join(basedir,"pan.gif"), BITMAP_TYPE_GIF)
      @pan_tool = tb.add_item(pan_icon.rescale(16,15).convert_to_bitmap, :label => "pan", :id => ID_PAN)
      
      #tb.set_bitmap_size(Size.new(16,15))
@@ -283,5 +283,6 @@ class AppController < Wx::App
       end
    	end
 
+end
 end
 

@@ -1,5 +1,4 @@
-
-require 'erb'
+module AimsProject
 
 class GeometryEditor < Wx::ScrolledWindow
   
@@ -42,4 +41,5 @@ class GeometryEditor < Wx::ScrolledWindow
   def get_contents
     ERB.new(@text_ctrl.get_value).result
   end
+end
 end

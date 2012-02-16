@@ -1,4 +1,4 @@
-
+module AimsProject
 class CrystalViewer < Wx::Panel
 
   include Wx
@@ -664,5 +664,5 @@ class CrystalViewer < Wx::Panel
 
   end
 
-
+end
 end

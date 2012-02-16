@@ -1,4 +1,4 @@
-
+module AimsProject
 class Inspector < Wx::Frame
 
   include Wx
@@ -160,4 +160,5 @@ EOS
      @z_repeat.set_value(1)
    end
    
+end
 end
