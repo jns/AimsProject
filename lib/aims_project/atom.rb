@@ -2,7 +2,7 @@
 module Aims
     
     class Atom
-  
+    
 	  @@black = nil
 	  @@white = nil
       @@blue = nil
@@ -14,35 +14,35 @@ module Aims
   
       def material
 	    unless @@yellow
-			@@yellow = Material.new(1,1,0,1)
+			@@yellow = AimsProject::Material.new(1,1,0,1)
 		end
 		
 	    unless @@black
-		  @@lback = Material.new(0,0,0,1)
+		  @@lback = AimsProject::Material.new(0,0,0,1)
 		end
         
 		unless @@white
-		  @@lback = Material.new(1,1,1,1)
+		  @@lback = AimsProject::Material.new(1,1,1,1)
 		end
         
 		unless @@blue
-          @@blue = Material.new(0,0,1,1)
+          @@blue = AimsProject::Material.new(0,0,1,1)
         end
     
         unless @@red
-          @@red = Material.new(1,0.4,0.4,1)
+          @@red = AimsProject::Material.new(1,0.4,0.4,1)
         end
     
         unless @@green
-          @@green = Material.new(0,1,0,1)
+          @@green = AimsProject::Material.new(0,1,0,1)
         end
     
         unless @@dark
-          @@dark =  Material.new(0.2,0.2,0.2,1)
+          @@dark =  AimsProject::Material.new(0.2,0.2,0.2,1)
         end
     
         unless @@light
-          @@light = Material.new(1,1,1,1)
+          @@light = AimsProject::Material.new(1,1,1,1)
         end
     
         case self.species

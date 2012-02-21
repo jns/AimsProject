@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "rubygems"
-require 'aims_project'
+require "aims_project"
 
 controller = AimsProject::AppController.new
 
