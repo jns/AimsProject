@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
 EOF
   s.version = "0.1.0"
   s.executables = ["AimsProjectManager"]
+  s.required_ruby_version = 1.9.2
   s.add_dependency "wxruby-ruby19", "~> 2.0.1"
   s.add_dependency "ruby-opengl2", "~> 0.60.3"
   s.add_dependency "aims", "~> 0.1.0"

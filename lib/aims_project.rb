@@ -3,8 +3,6 @@
 # the FHI-AIMS package
 
 require "rubygems"
-require "bundler/setup"
-
 require "wx"
 require "erb"
 require "gl"
