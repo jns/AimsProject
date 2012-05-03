@@ -633,6 +633,7 @@ class CrystalViewer < Wx::Panel
     bytes = bytewidth * self.height
 
     # Finish any pending Commands
+    @glPanel.set_current
     glFinish
 
     # Setup pixel store
@@ -652,6 +653,7 @@ class CrystalViewer < Wx::Panel
     bytes = bytewidth * self.height
 
     # Finish any pending Commands
+    @glPanel.set_current
     glFinish
 
     # Setup pixel store

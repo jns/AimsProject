@@ -269,7 +269,6 @@ class AppController < Wx::App
          @working_dir = fd.get_directory
 
        		# Read the front left buffer
-          @viewer.set_current
           pixels = @viewer.rgb_image_data
    		
        		image = Image.new(@viewer.width, @viewer.height)
