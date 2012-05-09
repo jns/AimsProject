@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+require 'aims_project'
+
+# Initialize an AimsProject
+# Create a directory named by the project
+# and generate the AimsProjectInfo.yaml file 
+
+projectName = ARGV[0]
+projectDir = projectName
+
+if project = AimsProject::Project.create(projectName)
+  project.aims_exe = "aims.071711_6.scalapack.mpi.x"
+  project.remote_host = "hoffman2"
+  project.remote_user = "jns"
+  project.remote_project_root_dir = "AimsProjects"
+
+  # save the project into a directory named after the project
+  project.save(projectDir)
+  
+  # Generate the default Capfile
+  File.open(File.join(projectDir, "Capfile"), 'w') do |capfile|
+    capfile.print <<-EOF
+require 'aims_project'
+
+load 'aims_project/cap_tasks.rb'
+
+set :project_name, #{projectName}
+set :remote_project_dir, #{projectDir}
+
+EOF
+  end
+  
+else 
+  STDERR.puts "Error creating project."
+end

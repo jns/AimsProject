@@ -3,15 +3,21 @@
 # the FHI-AIMS package
 
 require "rubygems"
-require "wx"
-require "erb"
-require "gl"
-require "glu"
 require 'aims'
+# require "aims_project"
+require 'yaml'
 
-require 'aims_project/material.rb'
-require 'aims_project/atom.rb'
-require 'aims_project/inspector.rb'
-require 'aims_project/crystal_viewer.rb'
-require 'aims_project/geometry_editor.rb'
-require 'aims_project/app_controller.rb'
+require 'aims_project/project.rb'
+require 'aims_project/calculation.rb'
+
+module AimsProject
+  # Constants
+  STAGED   = "STAGED"
+  QUEUED   = "QUEUED"
+  RUNNING  = "RUNNING"
+  COMPLETE = "COMPLETE"
+  CANCELED = "CANCELED"
+  
+  CALC_STATUS_FILENAME = ".calc_status"
+  
+end
