@@ -140,6 +140,11 @@ module AimsProject
 
     end
 
+    # The path of this calculation relative to the project
+    def relative_path
+      calculation_directory
+    end
+    
     # 
     # Return the directory for this calculation
     #

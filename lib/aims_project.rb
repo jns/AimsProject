@@ -16,6 +16,7 @@ module AimsProject
   QUEUED   = "QUEUED"
   RUNNING  = "RUNNING"
   COMPLETE = "COMPLETE"
+  ABORTED  = "ABORTED"
   CANCELED = "CANCELED"
   
   CALC_STATUS_FILENAME = ".calc_status"

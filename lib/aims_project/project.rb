@@ -10,6 +10,9 @@ class Project
       # The name of this project
       attr_accessor :name
 
+      # The path to aims_exe
+      attr_accessor :aims_path
+
       # The default aims executable
       attr_accessor :aims_exe
 
@@ -39,9 +42,28 @@ class Project
             p = Project.new
             p.name = name
             
-            FileUtils.mkdir(name)
-            p.save(name)
+            # Create the project directory
+            FileUtils.mkdir(p.relative_path)
+            p.save(p.relative_path)
+            
+            # Create the config directory
+            FileUtils.mkdir(File.join(p.relative_path, "config"))
+            
+            # Create the geometry directory
+            FileUtils.mkdir(File.join(p.relative_path, "geometry"))
+            
+            # Create the control directory
+            FileUtils.mkdir(File.join(p.relative_path, "control"))
+            
+            # Create the calculations directory
+            FileUtils.mkdir(File.join(p.relative_path, "calculations"))
+
             return p
+      end
+      
+      # The path of this project relative to project_root_dir
+      def relative_path
+        name
       end
       
       # The filename of the serialized yaml file representing this project
@@ -53,7 +75,7 @@ class Project
       def full_path
         File.dirname(File.expand_path(serialized_filename))
       end
-      
+            
       # Serialize this project to a yaml file named after this project
       # in the given directory
       def save(dir = ".")
@@ -66,7 +88,7 @@ class Project
       # This array is loaded directly from serialized yaml
       # files in each calculation directory
       def calculations
-        calc_status_files = Dir.glob("*/#{AimsProject::CALC_STATUS_FILENAME}")
+        calc_status_files = Dir.glob("geometry/*/#{AimsProject::CALC_STATUS_FILENAME}")
         calc_status_files.collect{|f|
           Calculation.load(File.dirname(f))
         }
