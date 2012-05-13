@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'aims_project'
-
+require 'fileutils'
 # Initialize an AimsProject
 # Create a directory named by the project
 # and generate the AimsProjectInfo.yaml file 
@@ -9,13 +9,12 @@ projectName = ARGV[0]
 projectDir = projectName
 
 if project = AimsProject::Project.create(projectName)
-  project.aims_path = "$HOME/bin"
-  project.aims_exe = "aims.071711_6.scalapack.mpi.x"
-  project.remote_host = "hoffman2"
-  project.remote_project_root_dir = "AimsProjects"
-
   # save the project into a directory named after the project
   project.save(projectDir)
+  
+  # Copy the capistrano tasks into config
+  dir = File.dirname(File.expand_path(__FILE__))
+  
   
   # Generate the default Capfile
   File.open(File.join(projectDir, "Capfile"), 'w') do |capfile|
@@ -24,8 +23,41 @@ require 'aims_project'
 
 load 'config/cap_tasks.rb'
 
+# The name of this project
 set :project_name, "#{projectName}"
+
+# The following settings apply to calculations occuring on the remote host
+
+# The base directory on the remote host
 set :remote_project_dir, "#{projectDir}"
+
+# The path to the aims executeable
+set :aims_path, '$HOME/bin'
+
+# The aims executable
+set :aims_exe, 'aims.071711_6.scalapack.mpi.x'
+
+# Query the user for the number of parallel nodes when queueing calculations
+set(:nodes) {Capistrano::CLI.ui.ask("How many compute nodes?: ")}
+
+# The memory for each calculation
+set :memory, 1024
+
+# The time limit for each calculation
+set :time, 24
+
+# The qsub command to execute
+# aims_script is predefined to be 'aims.sh', if this is unsuitable
+# it can be reset with: set, :aims_script 'foo'
+set(:qsub) { 
+  # this will vary between systems.  
+  "/u/local/bin/mpi.q -n \#{nodes} -d \#{memory} -t \#{time} -k \#{aims_script}"
+}
+
+# The remote host for data transfer of large files 
+role :data_transfer, "Your Data Transfer Host Here"
+# The remote host for job submission
+role :queue_submission, "Your Computation Cluster Server Here"
 
 EOF
   end

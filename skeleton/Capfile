@@ -1,0 +1,38 @@
+require 'aims_project'
+
+load 'config/tasks.rb'
+
+# The name of this project
+set :project_name, '__PROJECT_NAME__'
+
+# The following settings apply to calculations occuring on the remote host
+
+# The base directory on the remote host
+set :remote_project_dir, '__PROJECT_DIR__'
+
+# The path to the aims executeable
+set :aims_path, '$HOME/bin'
+
+# The aims executable
+set :aims_exe, 'aims.071711_6.scalapack.mpi.x'
+
+# Query the user for the number of parallel nodes when queueing calculations
+set(:nodes) {Capistrano::CLI.ui.ask("How many compute nodes?: ")}
+
+# The memory for each calculation
+set :memory, 1024
+
+# The time limit for each calculation
+set :time, 24
+
+# The qsub command to execute
+# aims_script is predefined to be 'aims.sh', if this is unsuitable
+# it can be reset with: set, :aims_script 'foo'
+set(:qsub) { 
+  "/u/local/bin/mpi.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}"
+}
+
+# The remote host for data transfer of large files 
+role :data_transfer, "jns@dtn2.hoffman2.idre.ucla.edu"
+# The remote host for job submission
+role :queue_submission, "jns@hoffman2.idre.ucla.edu"

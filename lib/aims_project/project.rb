@@ -10,21 +10,6 @@ class Project
       # The name of this project
       attr_accessor :name
 
-      # The path to aims_exe
-      attr_accessor :aims_path
-
-      # The default aims executable
-      attr_accessor :aims_exe
-
-      # The account on the remote server
-      attr_accessor :remote_user
-
-      # The name of the remote compute server
-      attr_accessor :remote_host
-
-      # The remote project root directory
-      # the project will be in :remote_project_root_dir/:name
-      attr_accessor :remote_project_root_dir
 
       # Load a Project from the serialized yaml file
       def Project.load(filename)
@@ -93,5 +78,6 @@ class Project
           Calculation.load(File.dirname(f))
         }
       end
+      
 end
 end
