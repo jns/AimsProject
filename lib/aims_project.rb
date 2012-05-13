@@ -19,6 +19,9 @@ module AimsProject
   ABORTED  = "ABORTED"
   CANCELED = "CANCELED"
   
+  CALCULATION_DIR = "calculations"
+  GEOMETRY_DIR = "geometry"
+  CONTROL_DIR = "control"
   CALC_STATUS_FILENAME = ".calc_status"
   
 end

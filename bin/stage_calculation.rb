@@ -25,9 +25,8 @@ include Curses
 def build_calculation(geometry, control)
   begin
     calc = AimsProject::Calculation.create(geometry, control)
-  rescue $! => e
-    puts e.message
-    calc.status = "ERROR | #{e.message} |"
+  rescue 
+    puts $!.message
   end
 end
 

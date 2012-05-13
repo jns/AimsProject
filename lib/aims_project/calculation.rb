@@ -35,7 +35,7 @@ module AimsProject
     # Find all calculations in the current directory 
     # with a given status
     def Calculation.find_all(status)
-      calculations = Dir["*/#{AimsProject::CALC_STATUS_FILENAME}"]
+      calculations = Dir.glob File.join(AimsProject::CALCULATION_Dir, "*", AimsProject::CALC_STATUS_FILENAME)
       calculations.collect{|calc_status_file|
         calc_dir = File.dirname(calc_status_file)
         calc = Calculation.load(calc_dir)
@@ -109,13 +109,13 @@ module AimsProject
     # Determine the name of the control.in file from the
     # control variable.  
     def control_file
-      "control.#{self.control}.in"
+      File.join(AimsProject::CONTROL_DIR, self.control)
     end
 
     # Determine the name of the geometr.in file from the 
     # geometry variable
     def geometry_file
-      "geometry.#{self.geometry}.in"
+      File.join(AimsProject::GEOMETRY_DIR, self.geometry)
     end
 
     # 
@@ -125,16 +125,18 @@ module AimsProject
     # If the cached version does not exist, then cache the working version and return true.  
     def Calculation.check_version(file)
       cache_dir = ".input_cache"
-      unless Dir.exists? cache_dir
+      unless File.exists? cache_dir
         Dir.mkdir cache_dir
+        Dir.mkdir File.join(cache_dir, AimsProject::GEOMETRY_DIR)
+        Dir.mkdir File.join(cache_dir, AimsProject::CONTROL_DIR)
       end
-
-      cache_version = File.join(cache_dir, file)
+      
       return false unless File.exists?(file)
+      cache_version = File.join(cache_dir, file)
       if File.exists?(cache_version)
         return FileUtils.compare_file(file, cache_version)
       else
-        FileUtils.cp file, cache_version
+        FileUtils.cp_r file, cache_version
         return true
       end
 
@@ -149,36 +151,9 @@ module AimsProject
     # Return the directory for this calculation
     #
     def calculation_directory
-      "#{geometry}.#{control}"
+      File.join AimsProject::CALCULATION_DIR, "#{geometry}.#{control}"
     end
 
-    #
-    # Build the calculation by staging the control and geometry files in a unique directory
-    # 1) Check that the input files exist
-    # 2) Verify that the input files match the cached version
-    # 3) Create the calculation directory
-    # 4) Copy the geometry and control files into the directory and name them control.in and geometry.in
-    # 5) Generate the shell script for calculation execution
-    # 6) Set the .calc_status flag to STAGED
-    def build_calculation
-
-      control_in = control_file
-      geometry_in = geometry_file
-
-      raise "Unable to locate #{control_in}" unless File.exists?(control_in) 
-      raise "Unable to locate #{geometry_in}" unless File.exists?(geometry_in)
-
-      raise "#{geometry_in} has changed since last use" unless check_version(geometry_in)
-      raise "#{control_in} has changed since last use" unless check_version(control_in)
-
-      FileUtils.mkdir calculation_directory
-      FileUtils.cp control_in, File.join(calculation_directory, "control.in")
-      FileUtils.cp geometry_in, File.join(calculation_directory, "geometry.in")
-      File.open(File.join(calculation_directory, ".calc_status"), "w") do |f|
-        f.puts "STAGED"
-      end
-      puts "Created #{calc_dir} ..."
-    end
 
     # Upload the calculation to the 
     # remote server

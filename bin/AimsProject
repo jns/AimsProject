@@ -9,6 +9,7 @@ projectName = ARGV[0]
 projectDir = projectName
 
 if project = AimsProject::Project.create(projectName)
+  project.aims_path = "$HOME/bin"
   project.aims_exe = "aims.071711_6.scalapack.mpi.x"
   project.remote_host = "hoffman2"
   project.remote_project_root_dir = "AimsProjects"

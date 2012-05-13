@@ -1,3 +1,5 @@
+require 'stringio'
+
 # ====================================================
 # These are capistrano tasks to help with queueing calculations
 # on a remote computing-cluster, tracking their status
@@ -24,7 +26,7 @@ def run_locally(cmd)
   logger.trace "command finished in #{(elapsed * 1000).round}ms" if logger
   output_on_stdout
 end
-
+  
 # =========================================================================
 # These variables must be set in the client Capfile. Failure to set them 
 # will result in an error.
@@ -38,6 +40,7 @@ _cset(:remote_project_dir) {abort "Please specify the name of the remote directo
 # These variables may be set in the client capfile if their default values
 # are not sufficient.
 # =========================================================================
+_cset(:aims_script) "aims.sh"
 
 # =========================================================================
 # These variables should NOT be changed unless you are very confident in
@@ -45,120 +48,116 @@ _cset(:remote_project_dir) {abort "Please specify the name of the remote directo
 # changes if you do decide to muck with these!
 # =========================================================================
 
-namespace :aims do 
+  namespace :aims do 
 
-desc <<-DESC
-  Synchronize with the remote computation cluster.
-DESC
-task :synchronize, :roles => :data_transfer do 
-  # Verify this AimsProject can be loaded
-  project = AimsProject::Project.load(project_name)
+    desc <<-DESC
+    Synchronize with the remote computation cluster.
+    DESC
+    task :synchronize, :roles => :data_transfer do 
+      # Verify this AimsProject can be loaded
+      project = AimsProject::Project.load(project_name)
 
-  find_servers(:roles => :data_transfer).each do |s|
-    # Upsync to remote directory
-    puts "Upsyncing project to #{s}..."
-    run_locally "rsync -auvz #{project.full_path} #{s}:#{remote_project_dir}/"
+      find_servers(:roles => :data_transfer).each do |s|
+        # Upsync to remote directory
+        puts "Upsyncing project to #{s}..."
+        run_locally "rsync -auvz #{project.full_path} #{s}:#{remote_project_dir}/"
 
-    # Downsync from remote directory
-    puts "Retreiving new data from #{s}"
-    run_locally "rsync -auvz #{s}:#{remote_project_dir}/#{project.relative_path}/ #{project.full_path}/"
-  end
-end
-
-
-desc <<-DESC
-Enqueue all staged calculations.  This task will:
-1) Generate a script for running aims in the calculation directory
-2) Upload that script to the remote server
-3) Execute mpi.q with options to generate the .cmd file suitable for qsub
-4) Execute qsub with the -notify flag enabled
-
-Example usage: 
-cap enqueue -s nodes=32 memory=1024 time=24
-DESC
-task :enqueue, :roles => :queue_submission do 
-  # Verify this AimsProject can be loaded
-  project = AimsProject::Project.load(projectName)
-
-  # Generate the aims.sh shell script that will execute 
-  # on the remote host
-        script =<<-SHELL_SCRIPT
-        #!/bin/bash
-        
-        # Define a function for modifying the status of the calculation        
-        function setStatus() {
-        	status=$1
-        	STATUSFILE=#{AimsProject::CALC_STATUS_FILENAME}
-        	TMPFILE=#{AimsProject::CALC_STATUS_FILENAME}.tmp
-        	sed "s/status: .*/status: ${status}/" $STATUSFILE > $TMPFILE
-        	mv $TMPFILE $STATUSFILE
-        }
-
-        # Setup environment
-        export OMP_NUM_THREADS=#{project.omp_num_threads || 1}
-        export MKL_NUM_THREADS=#{project.mkl_num_threads || 1}
-        export MKL_DYNAMIC=#{project.mkl_dynamic || FALSE}
-        export LD_LIBRARY_PATH=#{project.ld_library_path}:$LD_LIBRARY_PATH
-
-        # setup traps for early program termination
-        # qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
-        trap 'setStatus "#{AimsProject::ABORTED}"; exit;' 2 15 30 31
-        
-        # Set the status to running
-        setStatus "#{AimsProject::RUNNING}"
-        
-        # Run aims
-        #{project.aims_path}/#{project.aims_exe}
-
-        # Set the status to complete
-        setStatus "#{AimsProject::COMPLETE}"
-        
-  SHELL_SCRIPT
-  
-
-  project.calculations.find_all{|calc| 
-    calc.status == AimsProject::STAGED}.each do |calc|
-
-      # Define the remote calculation directory
-      remote_calc_dir = "#{project.remote_project_root_dir}/#{project.relative_path}/#{calc.relative_path}"
-
-      # Upload the aims.sh script to the calculation directory
-      upload script, remote_calc_dir + "/aims.sh"
-
-      # Define the execution parameters from configuration variables
-      # based in on the command line
-      n = if configuration[:nodes] 
-        configuration[:nodes]
-      else
-        puts "# of nodes not specified. Default is 8"
-        8
+        # Downsync from remote directory
+        puts "Retreiving new data from #{s}"
+        run_locally "rsync -auvz #{s}:#{remote_project_dir}/#{project.relative_path}/ #{project.full_path}/"
       end
-      
-      d = if configuration[:memory] 
-        configuration[:memory]
-      else
-        puts "Memory/node not specified. Default is 1024"
-        1024
-      end
-
-      if configuration[:time] 
-        configuration[:time]
-      else
-        puts "Time limit not specified. Default is 24h"
-        24
-      end
-      
-      
-      run <<-CMD
-      cd #{remote_calc_dir};
-      mpi.q -n #{n} -d #{d} -t #{d} -ns -k -o $CWD aims.sh";
-      echo "qsub -notify aims.sh"
-      CMD
-  
-      calc.status = AimsProject::QUEUED
-      calc.save
-      
     end
-  end
-end
 
+
+    desc <<-DESC
+    Enqueue all staged calculations.  This task will:
+    1) Generate a script for running aims in the calculation directory
+    2) Upload that script to the remote server
+    3) Execute mpi.q with options to generate the .cmd file suitable for qsub
+    4) Execute qsub with the -notify flag enabled
+
+    Example usage: 
+    cap enqueue -s nodes=32 memory=1024 time=24
+    DESC
+    task :enqueue, :roles => :queue_submission do 
+      
+      # Verify this AimsProject can be loaded
+      project = AimsProject::Project.load(project_name)
+
+      # Generate the aims.sh shell script that will execute 
+      # on the remote host
+      script =<<-SHELL_SCRIPT
+      #!/bin/bash
+
+      # Define a function for modifying the status of the calculation        
+      function setStatus() {
+        status=$1
+        STATUSFILE=#{AimsProject::CALC_STATUS_FILENAME}
+        TMPFILE=#{AimsProject::CALC_STATUS_FILENAME}.tmp
+        sed "s/status: .*/status: ${status}/" $STATUSFILE > $TMPFILE
+        mv $TMPFILE $STATUSFILE
+      }
+
+      # Setup environment
+      export OMP_NUM_THREADS=#{(project.respond_to? :omp_num_threads) ? project.omp_num_threads : 1}
+      export MKL_NUM_THREADS=#{(project.respond_to? :mkl_num_threads) ? project.mkl_num_threads : 1}
+      export MKL_DYNAMIC=#{(project.respond_to? :mkl_dynamic) ? project.mkl_dynamic : "FALSE"}
+      export LD_LIBRARY_PATH=#{(project.respond_to? :ld_library_path) ? project.ld_library_path : ""}:$LD_LIBRARY_PATH
+
+      # setup traps for early program termination
+      # qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
+      trap 'setStatus "#{AimsProject::ABORTED}"; exit;' 2 15 30 31
+
+      # Set the status to running
+      setStatus "#{AimsProject::RUNNING}"
+
+      # Run aims
+      #{aims_path}/#{aims_exe}
+
+      # Set the status to complete
+      setStatus "#{AimsProject::COMPLETE}"
+
+      SHELL_SCRIPT
+
+
+      project.calculations.find_all{|calc| 
+        calc.status == AimsProject::STAGED
+        }.each do |calc|
+
+          # Define the remote calculation directory
+          remote_calc_dir = "#{remote_project_dir}/#{project.relative_path}/#{calc.relative_path}"
+
+          # Upload the aims.sh script to the calculation directory
+          upload StringIO.new(script, 'r'), File.join(remote_calc_dir, aims_script) 
+
+          # Define the execution parameters from configuration variables
+          # based in on the command line
+          # if nodes.nil?
+          #   puts "# of nodes not specified. Default is 8"
+          #   nodes = 8
+          # end
+          # 
+          # if memory.nil?
+          #   puts "Memory/node not specified. Default is 1024"
+          #   memory = 1024
+          # end
+          # 
+          # if time.nil?
+          #   puts "Time limit not specified. Default is 24h"
+          #   time = 24
+          # end
+
+
+          run <<-CMD
+          cd #{remote_calc_dir};
+          #{qsub}
+          CMD
+
+          # TODO, do this first, and then revert inside rollback
+          calc.status = AimsProject::QUEUED
+          calc.save
+
+        end
+      end
+
+    end

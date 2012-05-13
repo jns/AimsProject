@@ -50,13 +50,13 @@ class Project
             FileUtils.mkdir(File.join(p.relative_path, "config"))
             
             # Create the geometry directory
-            FileUtils.mkdir(File.join(p.relative_path, "geometry"))
+            FileUtils.mkdir(File.join(p.relative_path, AimsProject::GEOMETRY_DIR))
             
             # Create the control directory
-            FileUtils.mkdir(File.join(p.relative_path, "control"))
+            FileUtils.mkdir(File.join(p.relative_path, AimsProject::CONTROL_DIR))
             
             # Create the calculations directory
-            FileUtils.mkdir(File.join(p.relative_path, "calculations"))
+            FileUtils.mkdir(File.join(p.relative_path, AimsProject::CALCULATION_DIR))
 
             return p
       end
@@ -88,7 +88,7 @@ class Project
       # This array is loaded directly from serialized yaml
       # files in each calculation directory
       def calculations
-        calc_status_files = Dir.glob("geometry/*/#{AimsProject::CALC_STATUS_FILENAME}")
+        calc_status_files = Dir.glob(File.join(AimsProject::CALCULATION_DIR, "*", AimsProject::CALC_STATUS_FILENAME))
         calc_status_files.collect{|f|
           Calculation.load(File.dirname(f))
         }
