@@ -9,59 +9,42 @@ projectName = ARGV[0]
 projectDir = projectName
 
 if project = AimsProject::Project.create(projectName)
+  
+  STDOUT.puts "Creating #{projectDir}..."
+  
   # save the project into a directory named after the project
   project.save(projectDir)
   
-  # Copy the capistrano tasks into config
+  # Copy the skeleton directory tasks into config
   dir = File.dirname(File.expand_path(__FILE__))
+  FileUtils.cp_r(File.join(dir, '..', 'skeleton', '.'), projectDir)
   
   
   # Generate the default Capfile
-  File.open(File.join(projectDir, "Capfile"), 'w') do |capfile|
-    capfile.print <<-EOF
-require 'aims_project'
-
-load 'config/cap_tasks.rb'
-
-# The name of this project
-set :project_name, "#{projectName}"
-
-# The following settings apply to calculations occuring on the remote host
-
-# The base directory on the remote host
-set :remote_project_dir, "#{projectDir}"
-
-# The path to the aims executeable
-set :aims_path, '$HOME/bin'
-
-# The aims executable
-set :aims_exe, 'aims.071711_6.scalapack.mpi.x'
-
-# Query the user for the number of parallel nodes when queueing calculations
-set(:nodes) {Capistrano::CLI.ui.ask("How many compute nodes?: ")}
-
-# The memory for each calculation
-set :memory, 1024
-
-# The time limit for each calculation
-set :time, 24
-
-# The qsub command to execute
-# aims_script is predefined to be 'aims.sh', if this is unsuitable
-# it can be reset with: set, :aims_script 'foo'
-set(:qsub) { 
-  # this will vary between systems.  
-  "/u/local/bin/mpi.q -n \#{nodes} -d \#{memory} -t \#{time} -k \#{aims_script}"
-}
-
-# The remote host for data transfer of large files 
-role :data_transfer, "Your Data Transfer Host Here"
-# The remote host for job submission
-role :queue_submission, "Your Computation Cluster Server Here"
-
-EOF
+  capfile = ""
+  File.open(File.join(projectDir, "Capfile"), 'r') do |capfile_template|
+    capfile_template.each_line do |line|
+      line.sub!(/__PROJECT_DIR__/, projectDir)
+      line.sub!(/__PROJECT_NAME__/, projectName)
+      capfile << line
+    end
   end
+  
+  File.open(File.join(projectDir, "Capfile"), 'w') do |f|
+    f.puts capfile
+  end
+  
+  STDOUT.puts <<-EOL
+  Done creating the aims project #{projectName}. Here are the steps to get started.
+  1) Customize the variables in #{File.join(projectDir, "Capfile")}
+  2) Add geometry files to the directory #{File.join(projectDir, AimsProject::GEOMETRY_DIR)}
+  3) Add control files to the directory #{File.join(projectDir, AimsProject::CONTROL_DIR)}
+  4) Generate a calculation with the command:
+      AimsCalculation [geometry] [control]
+  5) Execute the calculations
+  EOL
   
 else 
   STDERR.puts "Error creating project."
+  STDERR.puts $!.message
 end

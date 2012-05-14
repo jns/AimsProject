@@ -24,24 +24,27 @@ class Project
       # This will also create the directory structure 
       # for the project.  Returns true if successful, false otherwise
       def Project.create(name)
+        
+          return nil unless name
+          
             p = Project.new
             p.name = name
             
             # Create the project directory
             FileUtils.mkdir(p.relative_path)
             p.save(p.relative_path)
-            
-            # Create the config directory
-            FileUtils.mkdir(File.join(p.relative_path, "config"))
-            
-            # Create the geometry directory
-            FileUtils.mkdir(File.join(p.relative_path, AimsProject::GEOMETRY_DIR))
-            
-            # Create the control directory
-            FileUtils.mkdir(File.join(p.relative_path, AimsProject::CONTROL_DIR))
-            
-            # Create the calculations directory
-            FileUtils.mkdir(File.join(p.relative_path, AimsProject::CALCULATION_DIR))
+            # 
+            # # Create the config directory
+            # FileUtils.mkdir(File.join(p.relative_path, "config"))
+            # 
+            # # Create the geometry directory
+            # FileUtils.mkdir(File.join(p.relative_path, AimsProject::GEOMETRY_DIR))
+            # 
+            # # Create the control directory
+            # FileUtils.mkdir(File.join(p.relative_path, AimsProject::CONTROL_DIR))
+            # 
+            # # Create the calculations directory
+            # FileUtils.mkdir(File.join(p.relative_path, AimsProject::CALCULATION_DIR))
 
             return p
       end

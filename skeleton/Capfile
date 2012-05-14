@@ -8,7 +8,7 @@ set :project_name, '__PROJECT_NAME__'
 # The following settings apply to calculations occuring on the remote host
 
 # The base directory on the remote host
-set :remote_project_dir, '__PROJECT_DIR__'
+set :remote_project_dir, 'AimsProjects'
 
 # The path to the aims executeable
 set :aims_path, '$HOME/bin'
@@ -27,12 +27,12 @@ set :time, 24
 
 # The qsub command to execute
 # aims_script is predefined to be 'aims.sh', if this is unsuitable
-# it can be reset with: set, :aims_script 'foo'
+# it can be reset with: set :aims_script, 'foo'
 set(:qsub) { 
-  "/u/local/bin/mpi.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}"
+  "/u/local/bin/mpi.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; /u/systems/UGE8.0.1/bin/lx-amd64/qsub -noitfy #{aims_script}.cmd"
 }
 
 # The remote host for data transfer of large files 
-role :data_transfer, "jns@dtn2.hoffman2.idre.ucla.edu"
+role :data_transfer, "Your Data Transfer Server Here"
 # The remote host for job submission
-role :queue_submission, "jns@hoffman2.idre.ucla.edu"
+role :queue_submission, "Your Compute Cluster Server Here"
