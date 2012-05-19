@@ -40,7 +40,7 @@ _cset(:remote_project_dir) {abort "Please specify the name of the remote directo
 # These variables may be set in the client capfile if their default values
 # are not sufficient.
 # =========================================================================
-_cset(:aims_script) "aims.sh"
+_cset :aims_script, "aims.sh"
 
 # =========================================================================
 # These variables should NOT be changed unless you are very confident in
@@ -68,6 +68,9 @@ _cset(:aims_script) "aims.sh"
       end
     end
 
+    task :env, :roles => :queue_submission do 
+      run "env"
+    end
 
     desc <<-DESC
     Enqueue all staged calculations.  This task will:
@@ -87,37 +90,37 @@ _cset(:aims_script) "aims.sh"
       # Generate the aims.sh shell script that will execute 
       # on the remote host
       script =<<-SHELL_SCRIPT
-      #!/bin/bash
+#!/bin/bash
 
-      # Define a function for modifying the status of the calculation        
-      function setStatus() {
-        status=$1
-        STATUSFILE=#{AimsProject::CALC_STATUS_FILENAME}
-        TMPFILE=#{AimsProject::CALC_STATUS_FILENAME}.tmp
-        sed "s/status: .*/status: ${status}/" $STATUSFILE > $TMPFILE
-        mv $TMPFILE $STATUSFILE
-      }
+# Define a function for modifying the status of the calculation        
+function setStatus() {
+  status=$1
+  STATUSFILE=#{AimsProject::CALC_STATUS_FILENAME}
+  TMPFILE=#{AimsProject::CALC_STATUS_FILENAME}.tmp
+  sed "s/status: .*/status: ${status}/" $STATUSFILE > $TMPFILE
+  mv $TMPFILE $STATUSFILE
+}
 
-      # Setup environment
-      export OMP_NUM_THREADS=#{(project.respond_to? :omp_num_threads) ? project.omp_num_threads : 1}
-      export MKL_NUM_THREADS=#{(project.respond_to? :mkl_num_threads) ? project.mkl_num_threads : 1}
-      export MKL_DYNAMIC=#{(project.respond_to? :mkl_dynamic) ? project.mkl_dynamic : "FALSE"}
-      export LD_LIBRARY_PATH=#{(project.respond_to? :ld_library_path) ? project.ld_library_path : ""}:$LD_LIBRARY_PATH
+# Setup environment
+export OMP_NUM_THREADS=#{(project.respond_to? :omp_num_threads) ? project.omp_num_threads : 1}
+export MKL_NUM_THREADS=#{(project.respond_to? :mkl_num_threads) ? project.mkl_num_threads : 1}
+export MKL_DYNAMIC=#{(project.respond_to? :mkl_dynamic) ? project.mkl_dynamic : "FALSE"}
+export LD_LIBRARY_PATH=#{(project.respond_to? :ld_library_path) ? project.ld_library_path : ""}:$LD_LIBRARY_PATH
 
-      # setup traps for early program termination
-      # qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
-      trap 'setStatus "#{AimsProject::ABORTED}"; exit;' 2 15 30 31
+# setup traps for early program termination
+# qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
+trap 'setStatus "#{AimsProject::ABORTED}"; exit;' 2 15 30 31
 
-      # Set the status to running
-      setStatus "#{AimsProject::RUNNING}"
+# Set the status to running
+setStatus "#{AimsProject::RUNNING}"
 
-      # Run aims
-      #{aims_path}/#{aims_exe}
+# Run aims
+#{aims_path}/#{aims_exe}
 
-      # Set the status to complete
-      setStatus "#{AimsProject::COMPLETE}"
+# Set the status to complete
+setStatus "#{AimsProject::COMPLETE}"
 
-      SHELL_SCRIPT
+SHELL_SCRIPT
 
 
       project.calculations.find_all{|calc| 

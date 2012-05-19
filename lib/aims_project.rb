@@ -15,19 +15,18 @@ require 'aims_project/calculation.rb'
 # by the Fritz-Haber Institute (https://aimsclub.fhi-berlin.mpg.de), 
 # but can probably be generatlized to other codes.
 #
-# Author:: Joshua Shapiro (email:joshua.shapiro@gmail.com)
-# Copyright:: 2012 Joshua Shapiro
-# License:: TBD
+# Author: Joshua Shapiro (email:joshua.shapiro@gmail.com)
+# Copyright: 2012 Joshua Shapiro
+# License: TBD
 #
-# = Why should I use this?
+# = Why should I use AimsProject?
 # Good organization is crucial to obtaining meaningful results with
 # the FHI-AIMS package.  Careful testing of convergence 
 # across parameters in the control and geometry files easily requires
 # dozens of calculations.  The novice and expert user alike can quickly 
-# lose track of which calculations are complete and which are still pending.
-# Add to this problem the instabilities, memory problems, and time-limits
-# on computing clusters, and the user has to track failed and aborted calculations
-# as well.  Even the most careful user can and will make mistakes.  
+# lose track of which calculations are complete, which are still pending,
+# which calculations were errors, and which calculations failed or were aborted.
+# In this framework, even the most experienced user can and will make mistakes.  
 #
 # <em>The aim of this tool is to simplify and streamline the calculation 
 # pipeline, so the user can focus on the results.</em>
@@ -39,6 +38,10 @@ require 'aims_project/calculation.rb'
 # * Status tracking of calculations from creation to completion.
 # * Simple organizational structure with human readable metadata. 
 #   
+# = Planned Features
+# * Input file validation (To catch mistakes before submitting to a queue)
+# * Geometry input and output visualization
+# 
 # = Quick Start
 # == Installation
 #

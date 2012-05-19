@@ -7,6 +7,8 @@ require "erb"
 require "gl"
 require "glu"
 
+require 'aims'
+require 'aims_project'
 require 'aims_project/material.rb'
 require 'aims_project/atom.rb'
 require 'aims_project/inspector.rb'

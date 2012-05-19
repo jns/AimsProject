@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 #
-# stage_calculation.rb [geometry] [control]
+# AimsCalc [geometry] [control]
 # 
 # Author: Joshua Shapiro, 2012
 # email: joshua.shapiro@gmail.com
@@ -33,8 +33,8 @@ end
 if ARGV.size == 2
   # If the user supplies command line args, then 
   # assume they are the control and geometry files
-  geometry = ARGV[0]
-  control = ARGV[1]
+  geometry = File.basename(ARGV[0])
+  control = File.basename(ARGV[1])
   build_calculation(geometry, control)
 else
   # Otherwise prompt the user for geometry and 
