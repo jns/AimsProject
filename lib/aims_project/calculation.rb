@@ -35,7 +35,7 @@ module AimsProject
     # Find all calculations in the current directory 
     # with a given status
     def Calculation.find_all(status)
-      calculations = Dir.glob File.join(AimsProject::CALCULATION_Dir, "*", AimsProject::CALC_STATUS_FILENAME)
+      calculations = Dir.glob File.join(AimsProject::CALCULATION_DIR, "*", AimsProject::CALC_STATUS_FILENAME)
       calculations.collect{|calc_status_file|
         calc_dir = File.dirname(calc_status_file)
         calc = Calculation.load(calc_dir)
@@ -82,11 +82,36 @@ module AimsProject
       return calc
     end
     
+    # Create a new calculation that will restart a geometry relaxation 
+    # calculation using the last available geometry.  
+    # This method will generate a new file in 
+    # the geometry directory with the extension +restartN+, where 
+    # N will be incremented if the filename already exists.
+    # A new calculation will be created with the new geometry and 
+    # the original control.  
+    def restart_relaxation
+      
+      geometry_orig = self.geometry_file
+      n = 0
+      begin 
+        n += 1
+        geometry_new = geometry_orig + ".restart#{n}"
+      end while File.exist?(geometry_new)
+      
+      File.open(geometry_new, 'w') do |f|
+        f.puts "# Final geometry from #{calculation_directory}"
+        f.puts self.geometry_next_step.format_geometry_in
+      end
+      
+      Calculation.create(geometry_new, self.control)
+      
+    end
+    
     # Initialize a new calculation.  Consider using Calculation#create 
     # to generate the directory structure as well.
     def initialize(geometry, control)
-      self.geometry = geometry
-      self.control = control
+      self.geometry = File.basename(geometry)
+      self.control = File.basename(control)
     end
 
     # Serialize this calculation as a yaml file
@@ -154,26 +179,42 @@ module AimsProject
       File.join AimsProject::CALCULATION_DIR, "#{geometry}.#{control}"
     end
 
-
-    # Upload the calculation to the 
-    # remote server
-    def upload_calculation(ssh)
-      
+    # Search the calculation directory for the calculation output.
+    # If found, parse it and return the Aims::AimsOutput object, otherwise
+    # return nil.
+    # If multiple output files are found, use the last one in the list
+    # when sorted alpha-numerically.  (This is assumed to be the most recent calculation)
+    def output(output_pattern = "*output*")
+      output_files = Dir.glob(File.join(calculation_directory, output_pattern))
+      if output_files.empty?
+        nil
+      else
+        Aims::OutputParser.parse(output_files.last)
+      end
     end
 
-    # Queue the calculation for computation
-    def enqueue
-    end
-
-    # Test if the calculation is running
-    def running?
-    end
-
-    # Test if the calculation is complete
-    def complete?
+    # Parse the calculation output and return the final geometry
+    # of this calculation.  Return nil if no output is found.
+    def final_geometry
+      # ouput is not cached, so we only retrieve it once
+      o = self.output
+      if o
+        o.final_geometry
+      else
+        nil
+      end
     end
     
-
-
+    # Parse the geometry.in.next_step file in the calculation directory
+    # if it exists and return the Aims::UnitCell object or nil
+    def geometry_next_step
+      g_file = File.join(calculation_directory, "geometry.in.next_step")
+      if File.exists?(g_file)
+        Aims::GeometryParser.parse(g_file)
+      else
+        nil
+      end
+    end
+    
   end
 end
