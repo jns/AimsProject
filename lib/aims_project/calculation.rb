@@ -82,6 +82,11 @@ module AimsProject
       return calc
     end
     
+    # The name of this calculation
+    def name
+      "#{geometry}.#{control}"
+    end
+    
     # Create a new calculation that will restart a geometry relaxation 
     # calculation using the last available geometry.  
     # This method will generate a new file in 
@@ -176,7 +181,7 @@ module AimsProject
     # Return the directory for this calculation
     #
     def calculation_directory
-      File.join AimsProject::CALCULATION_DIR, "#{geometry}.#{control}"
+      File.join AimsProject::CALCULATION_DIR, self.name
     end
 
     # Search the calculation directory for the calculation output.

@@ -18,9 +18,41 @@ rescue
   require 'aims_project'
 end
 
+def usage
+  STDERR.puts <<-END_USAGE
+usage: AimsCalc command [args]
+  Valid commands are:
+  create   - Create a new calculation
+  restart  - Restart an aborted or cancelled calculation using most recent geometry   
+  help cmd - For help on a given command
+END_USAGE
+end
 
-require "curses"
-include Curses
+def help(cmd)
+  case cmd
+  when /create/
+    puts <<-HELP
+usage: AimsCalc create [geometry] [control]
+Create and stage a new calculation.
+ * geometry is the name of a geometry file
+ * control is the name of a control file
+ 
+ Without arguments, the user will be prompted to select geometry and control files.
+ 
+HELP
+  when /restart/
+    puts <<-HELP
+usage: AimsCalc restart [calculation]
+Restart an aborted or cancelled calculation using most recent available geometry.
+ * The name of a calculation
+ 
+Without arguments, the user will be prompted to select a calculation.
+
+HELP
+  else
+    usage
+  end
+end
 
 # Create a calculation from a geometry and control file. 
 # * +geometry+ +String+, The name of a file that can be found in the geometry directory
@@ -34,67 +66,23 @@ def build_calculation(geometry, control)
 end
 
 def restart_calculation(calculation)
-  calculation.restart_relaxation
+  calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
+  calc = AimsProject::Calculation.load(calc_dir)
+  calc.restart_relaxation
+  puts "Created #{calc.name}"
 end
 
-if ARGV.size == 2
-  # If the user supplies command line args, then 
-  # assume they are the control and geometry files
-  geometry = File.basename(ARGV[0])
-  control = File.basename(ARGV[1])
-  build_calculation(geometry, control)
+
+# Run the desired command
+args = ARGV
+cmd = args.shift
+case cmd
+when /create/
+  build_calculation(args[0], args[1])
+when /restart/
+  restart_calculation(args[0])
+when /help/
+  help(args[0])
 else
-  # Otherwise prompt the user for geometry and 
-  # control files to use.
-  
-  geometries = Dir.glob("geometry.*.in")
-  controls = Dir.glob("control.*.in")
-
-  if geometries.empty?
-    puts "No Geometry Files to choose from."
-    exit
-  end
-
-  if controls.empty?
-    puts "No Control files to choose from."
-    exit
-  end
-
-  # 
-  # Return a subset of the array choices 
-  def page_choices(choices, choices_per_page, page)
-    offset = page*choices_per_page
-    while offset > choices.size
-        page = page - 1
-        offset = page*choices_per_page
-    end
-  
-    page_choices = {}
-    (offset..offset+choices_per_page).each do |i|
-      page_choices[i+1] = choices[i] if choices[i]
-    end
-    page_choices
-  end
-
-  def show_choices(window, choices)
-    choices.each_pair {|key, val|
-      window.addstr("(#{key})  #{val}\n")
-    }
-  end
-
-  init_screen
-  begin
-    crmode
-    win = Window.new(0, 0, 1,1)
-    width = win.maxx
-    height = win.maxy
-    show_choices(win, page_choices(geometries, height-5, 0))
-    win.setpos(height-1, 1)
-    win << "Choose a geometry:  "
-    win.refresh
-    ch = win.getch
-  
-  ensure
-    close_screen
-  end
+  usage
 end
