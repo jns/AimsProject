@@ -74,15 +74,30 @@ end
 
 
 # Run the desired command
-args = ARGV
-cmd = args.shift
-case cmd
-when /create/
-  build_calculation(args[0], args[1])
-when /restart/
-  restart_calculation(args[0])
-when /help/
-  help(args[0])
-else
-  usage
+begin
+  args = ARGV
+  cmd = args.shift
+  case cmd
+  when /create/
+    build_calculation(args[0], args[1])
+  when /restart/
+    restart_calculation(args[0])
+  when /help/
+    help(args[0])
+  else
+    usage
+  end
+rescue AimsProject::AimsProjectException => ex
+  STDERR.puts ex.message
+rescue => error
+  STDERR.puts
+  STDERR.puts "Sorry, something went wrong. Please send the following information to joshua.shapiro@gmail.com"
+  STDERR.puts
+  STDERR.puts "FILE:  #{__FILE__}"
+  STDERR.puts "CMD:   #{cmd}"
+  STDERR.puts "ARGS:  #{args.join(" ")}"
+  STDERR.puts "ERROR: " + error.message
+  STDERR.print "\t" + error.backtrace.slice(0..5).join("\n\t")
+  STDERR.puts 
+  STDERR.puts 
 end

@@ -10,12 +10,6 @@ set :project_name, '__PROJECT_NAME__'
 # The base directory on the remote host
 set :remote_project_dir, 'AimsProjects'
 
-# The path to the aims executeable
-set :aims_path, '$HOME/bin'
-
-# The aims executable
-set :aims_exe, 'aims.071711_6.scalapack.mpi.x'
-
 # Query the user for the number of parallel nodes when queueing calculations
 set(:nodes) {Capistrano::CLI.ui.ask("How many compute nodes?: ")}
 
@@ -29,7 +23,7 @@ set :time, 24
 # aims_script is predefined to be 'aims.sh', if this is unsuitable
 # it can be reset with: set :aims_script, 'foo'
 set(:qsub) { 
-  "/u/local/bin/mpi.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; /u/systems/UGE8.0.1/bin/lx-amd64/qsub -noitfy #{aims_script}.cmd"
+  "parallel.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; qsub -noitfy #{aims_script}.cmd"
 }
 
 # The remote host for data transfer of large files 

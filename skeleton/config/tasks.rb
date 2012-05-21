@@ -84,45 +84,10 @@ _cset :aims_script, "aims.sh"
     DESC
     task :enqueue, :roles => :queue_submission do 
       
-      # Verify this AimsProject can be loaded
+      #  Load the project
       project = AimsProject::Project.load(project_name)
 
-      # Generate the aims.sh shell script that will execute 
-      # on the remote host
-      script =<<-SHELL_SCRIPT
-#!/bin/bash
-
-# Define a function for modifying the status of the calculation        
-function setStatus() {
-  status=$1
-  STATUSFILE=#{AimsProject::CALC_STATUS_FILENAME}
-  TMPFILE=#{AimsProject::CALC_STATUS_FILENAME}.tmp
-  sed "s/status: .*/status: ${status}/" $STATUSFILE > $TMPFILE
-  mv $TMPFILE $STATUSFILE
-}
-
-# Setup environment
-export OMP_NUM_THREADS=#{(project.respond_to? :omp_num_threads) ? project.omp_num_threads : 1}
-export MKL_NUM_THREADS=#{(project.respond_to? :mkl_num_threads) ? project.mkl_num_threads : 1}
-export MKL_DYNAMIC=#{(project.respond_to? :mkl_dynamic) ? project.mkl_dynamic : "FALSE"}
-export LD_LIBRARY_PATH=#{(project.respond_to? :ld_library_path) ? project.ld_library_path : ""}:$LD_LIBRARY_PATH
-
-# setup traps for early program termination
-# qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
-trap 'setStatus "#{AimsProject::ABORTED}"; exit;' 2 15 30 31
-
-# Set the status to running
-setStatus "#{AimsProject::RUNNING}"
-
-# Run aims
-#{aims_path}/#{aims_exe}
-
-# Set the status to complete
-setStatus "#{AimsProject::COMPLETE}"
-
-SHELL_SCRIPT
-
-
+      # Enqueue all staged calculations
       project.calculations.find_all{|calc| 
         calc.status == AimsProject::STAGED
         }.each do |calc|
@@ -131,24 +96,7 @@ SHELL_SCRIPT
           remote_calc_dir = "#{remote_project_dir}/#{project.relative_path}/#{calc.relative_path}"
 
           # Upload the aims.sh script to the calculation directory
-          upload StringIO.new(script, 'r'), File.join(remote_calc_dir, aims_script) 
-
-          # Define the execution parameters from configuration variables
-          # based in on the command line
-          # if nodes.nil?
-          #   puts "# of nodes not specified. Default is 8"
-          #   nodes = 8
-          # end
-          # 
-          # if memory.nil?
-          #   puts "Memory/node not specified. Default is 1024"
-          #   memory = 1024
-          # end
-          # 
-          # if time.nil?
-          #   puts "Time limit not specified. Default is 24h"
-          #   time = 24
-          # end
+          upload File.join(AimsProject::CONFIG_DIR, aims_script), File.join(remote_calc_dir, aims_script) 
 
 
           run <<-CMD

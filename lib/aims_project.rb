@@ -8,6 +8,7 @@ require 'yaml'
 
 require 'aims_project/project.rb'
 require 'aims_project/calculation.rb'
+require 'aims_project/aims_project_exception.rb'
 
 # AimsProject is a set of tools for managing and organizing 
 # calculations for executaion on high-performance computing clusters.
@@ -140,6 +141,7 @@ module AimsProject
   ABORTED  = "ABORTED"
   CANCELED = "CANCELED"
   
+  CONFIG_DIR = "config"
   CALCULATION_DIR = "calculations"
   GEOMETRY_DIR = "geometry"
   CONTROL_DIR = "control"
