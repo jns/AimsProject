@@ -48,10 +48,20 @@ module AimsProject
     end
     
     # Load a calculation from the serialized yaml file in the given directory
+    # raises an *ObjectFileNotFoundException* if the specified directory does
+    # not contain a yaml serialization of the calculation.
+    # raises a *CorruptObjectFileException* if the yaml file cannot be de-serialized
     def Calculation.load(dir)
-      File.open(File.join(dir, AimsProject::CALC_STATUS_FILENAME), 'r') do |f|
-        YAML.load(f)
-      end
+      
+      calc_file  = File.join(dir, AimsProject::CALC_STATUS_FILENAME)
+      raise ObjectFileNotFoundException.new(calc_file) unless File.exists?(calc_file)
+      
+      f = File.open(calc_file, 'r')
+      calc_obj = YAML.load(f)
+      f.close
+      
+      raise CorruptObjectFileException.new(calc_file) unless calc_obj
+      return calc_obj
     end
     
     # Create a calculation and the corresponding

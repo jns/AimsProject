@@ -73,14 +73,14 @@ _cset :aims_script, "aims.sh"
     end
 
     desc <<-DESC
-    Enqueue all staged calculations.  This task will:
-    1) Generate a script for running aims in the calculation directory
-    2) Upload that script to the remote server
-    3) Execute mpi.q with options to generate the .cmd file suitable for qsub
-    4) Execute qsub with the -notify flag enabled
-
+    Enqueue all staged calculations.  
+    This task will:
+    1) Customize and upload the script aims.sh to the remote server
+    2) cd to the calculation directory on the remote host
+    3) execute the "qsub" command as defined in Capfile
+    
     Example usage: 
-    cap enqueue -s nodes=32 memory=1024 time=24
+    cap aims:enqueue 
     DESC
     task :enqueue, :roles => :queue_submission do 
       

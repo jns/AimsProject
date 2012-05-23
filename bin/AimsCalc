@@ -54,6 +54,7 @@ HELP
   end
 end
 
+
 # Create a calculation from a geometry and control file. 
 # * +geometry+ +String+, The name of a file that can be found in the geometry directory
 # * +control+ +String+, The name of a file that can be found in the control directory
@@ -65,6 +66,7 @@ def build_calculation(geometry, control)
   end
 end
 
+# Generate a new calculation by calling Calculation::restart_relaxation
 def restart_calculation(calculation)
   calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
   calc = AimsProject::Calculation.load(calc_dir)
@@ -72,6 +74,14 @@ def restart_calculation(calculation)
   puts "Created #{calc.name}"
 end
 
+# Print status information of each calculation
+def calc_statuses
+  project_obj_files = Dir["*.yaml"]
+  project = AimsProject::Project.load(project_obj_files.first)
+  project.calculations.each{|c|
+      puts c.to_yaml
+  }
+end
 
 # Run the desired command
 begin
@@ -82,6 +92,8 @@ begin
     build_calculation(args[0], args[1])
   when /restart/
     restart_calculation(args[0])
+  when /status/
+    calc_statuses
   when /help/
     help(args[0])
   else

@@ -23,7 +23,7 @@ set :time, 24
 # aims_script is predefined to be 'aims.sh', if this is unsuitable
 # it can be reset with: set :aims_script, 'foo'
 set(:qsub) { 
-  "parallel.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; qsub -noitfy #{aims_script}.cmd"
+  "parallel.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; qsub -notify #{aims_script}.cmd"
 }
 
 # The remote host for data transfer of large files 

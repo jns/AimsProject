@@ -35,13 +35,15 @@ if project = AimsProject::Project.create(projectName)
   end
   
   STDOUT.puts <<-EOL
+  
   Done creating the aims project #{projectName}. Here are the steps to get started.
   1) Customize the variables in #{File.join(projectDir, "Capfile")}
   2) Add geometry files to the directory #{File.join(projectDir, AimsProject::GEOMETRY_DIR)}
   3) Add control files to the directory #{File.join(projectDir, AimsProject::CONTROL_DIR)}
   4) Generate a calculation with the command:
-      AimsCalculation [geometry] [control]
-  5) Execute the calculations
+      AimsCalc create [geometry] [control]
+  5) Execute the calculations with the command:
+      cap aims:enqueue
   EOL
   
 else 
