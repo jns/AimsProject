@@ -9,6 +9,7 @@ export LD_LIBRARY_PATH=/u/local/compilers/intel/11.1/073/mkl/lib/em64t:/u/local/
 
 STATUSFILE=calc_status.yaml
 LOCKFILE=${STATUSFILE}.lock
+MACHINEFILE=hfile
 
 # Required by openmpi
 source /u/local/Modules/default/init/modules.sh
@@ -39,7 +40,7 @@ function setStatus() {
 
 
 # setup traps for early program termination
-# qsub will send SIGUSR1(30) or SIGUSR2(31) before killing a job
+# qsub with the -notify flag will send SIGUSR1(30) or SIGUSR2(31) before killing a job
 trap 'setStatus "ABORTED"; exit;' 2 15 30 31
 
 # Set the status to running
@@ -48,7 +49,8 @@ setStatus "RUNNING"
 
 # Run aims
 # $NSLOTS is set by the sun-grid-engine when qsub is invoked. 
-mpiexec -n $NSLOTS $HOME/bin/aims.071711_6.scalapack.mpi.x
+awk '{print $1 " slots=" $2}' $PE_HOSTFILE > $MACHINEFILE
+mpiexec -n $NSLOTS -machinefile $MACHINEFILE $HOME/bin/aims.071711_6.scalapack.mpi.x
 
 # Set the status to complete
 setStatus "COMPLETE"

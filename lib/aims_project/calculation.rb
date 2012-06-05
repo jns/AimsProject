@@ -106,6 +106,7 @@ module AimsProject
     # the original control.  
     def restart_relaxation
       
+      # Create a new geometry file
       geometry_orig = self.geometry_file
       n = 0
       begin 

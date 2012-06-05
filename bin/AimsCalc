@@ -23,7 +23,8 @@ def usage
 usage: AimsCalc command [args]
   Valid commands are:
   create   - Create a new calculation
-  restart  - Restart an aborted or cancelled calculation using most recent geometry   
+  restart  - Restart an aborted or cancelled calculation using most recent geometry 
+  rerun    - Rerun a calculation using the original geometry and control  
   help cmd - For help on a given command
 END_USAGE
 end
@@ -48,6 +49,20 @@ Restart an aborted or cancelled calculation using most recent available geometry
  
 Without arguments, the user will be prompted to select a calculation.
 
+HELP
+  when /status/
+    puts <<-HELP
+usage: AimsCalc status
+Currently just dumps all the status files
+HELP
+  when /rerun/
+    puts <<-HELP
+
+usage: AimsCalc rerun [calculation]
+
+Use this to rerun a calculation for whatever reason.  This will 
+set the calculation status back to staged. run cap aims:enqueue to 
+actually rerun the calculation.
 HELP
   else
     usage
@@ -83,6 +98,16 @@ def calc_statuses
   }
 end
 
+# Set the calculation status back to staged
+def rerun_calculation(calculation)
+  calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
+  calc = AimsProject::Calculation.load(calc_dir)
+  calc.status = AimsProject::STAGED
+  calc.save
+  puts "Calculation status set to STAGED. Run cap aims:enqueue to execute."
+  puts
+end
+
 # Run the desired command
 begin
   args = ARGV
@@ -94,6 +119,8 @@ begin
     restart_calculation(args[0])
   when /status/
     calc_statuses
+  when /rerun/
+    rerun_calculation(args[0])
   when /help/
     help(args[0])
   else
