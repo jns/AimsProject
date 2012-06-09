@@ -1,6 +1,6 @@
 
 require 'fileutils'
-
+require 'erb'
 #
 # A calculation is a combination of a geometry, a control file, and an output
 # Each calculation runs in its own directory
@@ -30,7 +30,14 @@ module AimsProject
 
   class Calculation
 
-    attr_accessor :geometry, :control, :status
+    # The name of the geometry file
+    attr_accessor :geometry 
+    
+    # The name of the control file
+    attr_accessor :control 
+    
+    # The current calculation status
+    attr_accessor :status
 
     # Find all calculations in the current directory 
     # with a given status
@@ -71,11 +78,19 @@ module AimsProject
     # create a calculation directory that is the merger of those two
     # filenames, and finally copy the geometry and control files into
     # the calculation directory and rename them geometry.in and control.in
-    def Calculation.create(geometry, control)
+    # @param [String] geometry The filename of the geometry file to use to initialize the calculation
+    # @param [String] control The filename of the control file to use to initialize the calculation
+    # @param [Hash<Symbol, Object>] vars A symbol=>Object hash of variables that will be available when 
+    #                     evaluating the geometry and control files using embedded ruby  
+    def Calculation.create(geometry, control, vars = {})
 
       calc = Calculation.new(geometry, control)
       control_in = calc.control_file
       geometry_in = calc.geometry_file
+      vars.each_pair{|sym, val|
+        puts "Setting #{sym.to_s} = #{val}"
+        calc.instance_variable_set(sym, val)
+      }
 
       raise "Unable to locate #{control_in}" unless File.exists?(control_in) 
       raise "Unable to locate #{geometry_in}" unless File.exists?(geometry_in)
@@ -84,12 +99,27 @@ module AimsProject
       raise "#{control_in} has changed since last use" unless check_version(control_in)
 
       FileUtils.mkdir calc.calculation_directory
-      FileUtils.cp control_in, File.join(calc.calculation_directory, "control.in")
-      FileUtils.cp geometry_in, File.join(calc.calculation_directory, "geometry.in")
+      
+      erb = ERB.new(File.read(control_in))
+      File.open File.join(calc.calculation_directory, "control.in"), "w" do |f|
+        f.puts erb.result(calc.get_binding)
+      end
+      
+      erb = ERB.new(File.read(geometry_in))
+      File.open File.join(calc.calculation_directory, "geometry.in"), "w" do |f|
+        f.puts erb.result(calc.get_binding)
+      end
+
+
       calc.status = AimsProject::STAGED
       calc.save
       
       return calc
+    end
+    
+    # Get the binding for this calculation
+    def get_binding
+      binding()
     end
     
     # The name of this calculation
