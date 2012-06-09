@@ -39,10 +39,16 @@ module AimsProject
     # The current calculation status
     attr_accessor :status
 
+    # The calculation subdirectory, (can be nil)
+    attr_accessor :calc_subdir
+
     # Find all calculations in the current directory 
     # with a given status
     def Calculation.find_all(status)
+      # Catch all root calculations
       calculations = Dir.glob File.join(AimsProject::CALCULATION_DIR, "*", AimsProject::CALC_STATUS_FILENAME)
+      # Catch all sub calculations
+      calculations << Dir.glob(File.join(AimsProject::CALCULATION_DIR, "*", "*",  AimsProject::CALC_STATUS_FILENAME))
       calculations.collect{|calc_status_file|
         calc_dir = File.dirname(calc_status_file)
         calc = Calculation.load(calc_dir)
@@ -80,17 +86,28 @@ module AimsProject
     # the calculation directory and rename them geometry.in and control.in
     # @param [String] geometry The filename of the geometry file to use to initialize the calculation
     # @param [String] control The filename of the control file to use to initialize the calculation
-    # @param [Hash<Symbol, Object>] vars A symbol=>Object hash of variables that will be available when 
+    # @param [Hash<Symbol, Object>] user_vars A symbol=>Object hash of variables that will be available when 
     #                     evaluating the geometry and control files using embedded ruby  
-    def Calculation.create(geometry, control, vars = {})
+    #                     This hash is also used to generate a calculation subdirectory
+    def Calculation.create(geometry, control, user_vars = {})
 
       calc = Calculation.new(geometry, control)
       control_in = calc.control_file
       geometry_in = calc.geometry_file
-      vars.each_pair{|sym, val|
-        puts "Setting #{sym.to_s} = #{val}"
+
+      # Define the calculation sub-directory if user_vars exists
+      unless user_vars.empty?
+        calc.calc_subdir = user_vars.keys.collect{|k| (k.to_s + "=" + user_vars[k].to_s).gsub('@', '').gsub(' ','_') }.join(",")
+      end
+      
+      # Add configuration variables to the calculation binding
+      calc.get_binding.eval(File.read(File.join(AimsProject::CONFIG_DIR, "user_variables.rb")))
+
+      # Merger user-vars to the calculation binding
+      user_vars.each_pair{|sym, val|
         calc.instance_variable_set(sym, val)
       }
+      
 
       raise "Unable to locate #{control_in}" unless File.exists?(control_in) 
       raise "Unable to locate #{geometry_in}" unless File.exists?(geometry_in)
@@ -98,7 +115,10 @@ module AimsProject
       raise "#{geometry_in} has changed since last use" unless check_version(geometry_in)
       raise "#{control_in} has changed since last use" unless check_version(control_in)
 
-      FileUtils.mkdir calc.calculation_directory
+      if Dir.exists? calc.calculation_directory
+        raise "Could not create calculation.\n #{calc.calculation_directory} already exists. \n\n If you really want to re-create this calculation, then manually delete it and try again. \n"
+      end
+      FileUtils.mkdir_p calc.calculation_directory
       
       erb = ERB.new(File.read(control_in))
       File.open File.join(calc.calculation_directory, "control.in"), "w" do |f|
@@ -222,7 +242,7 @@ module AimsProject
     # Return the directory for this calculation
     #
     def calculation_directory
-      File.join AimsProject::CALCULATION_DIR, self.name
+      File.join AimsProject::CALCULATION_DIR, self.name, (@calc_subdir || "")
     end
 
     # Search the calculation directory for the calculation output.

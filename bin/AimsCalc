@@ -79,6 +79,8 @@ end
 def build_calculation(geometry, control, args)
   begin
     vars = {}
+    
+    # Condition format of input user variables
     args.each{|arg| 
       if arg =~ /(.*)=(.*)/
         symbol = $1
@@ -93,14 +95,17 @@ def build_calculation(geometry, control, args)
         # Cast value to Float if applicable
         val = if value =~ /^(\d+\.*\d*)$/
           $1.to_f
-        else
+        elsif value =~ /"(.*)"/ or value =~ /'(.*)'/
           $1
+        else
+          value
         end
         
         vars[sym] = val
       end
     }
     calc = AimsProject::Calculation.create(geometry, control, vars)
+    puts "Created #{calc.calculation_directory}"
   rescue 
     puts $!.message
   end
