@@ -37,6 +37,9 @@ class AppController < Wx::App
         size = [500,500]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
         @statusbar = @frame.create_status_bar
+
+        # Initialize the selection
+        @selection = {}
         
         # Create the split view        
         splitter = SplitterWindow.new(@frame)
@@ -143,7 +146,15 @@ class AppController < Wx::App
      @viewer.delete_atom
    end
    
+   def nudge_selected_atoms(x,y,z)
+     if @selection[:atoms]
+       @selection[:atoms].each{|a| a.displace!(x,y,z)}
+     end
+     update_viewer
+   end
+   
    def select_atom(atom)
+     @selection[:atoms] = [atom]
      @editor.select_atom(atom)
    end
    

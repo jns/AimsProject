@@ -76,6 +76,22 @@ class CrystalViewer < Wx::Panel
       end
     }
     
+    evt_char {|evt| 
+      nudge_dir = case evt.get_key_code
+          when K_LEFT
+            [-1,0,0]
+          when K_RIGHT
+            [1,0,0]
+          when K_UP
+            [0,1,0]
+          when K_DOWN
+            [0,-1,0]
+          else
+            [0,0,0]
+          end
+        nudge(nudge_dir)
+    }
+    
   end
 
   def set_defaults
@@ -110,6 +126,11 @@ class CrystalViewer < Wx::Panel
     self.hiRes
     self.mouse_motion_func = :rotate
     
+  end
+
+
+  def nudge(dir)
+    @controller.nudge_selected_atoms(dir[0]*0.5, dir[1]*0.5, 0)
   end
 
 =begin
@@ -232,6 +253,7 @@ class CrystalViewer < Wx::Panel
       }
     end
   end
+  
 
   def move_clip_plane(x,y)
     scale = 0.1

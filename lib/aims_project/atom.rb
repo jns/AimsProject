@@ -29,6 +29,7 @@ module Aims
       @@light = nil
 	  @@yellow = nil
   
+  
       def material
 	    unless @@yellow
 			@@yellow = AimsProject::Material.new(1,1,0,1)
