@@ -38,6 +38,9 @@ class GeometryEditor < Wx::ScrolledWindow
     # self.text_ctrl.set_style(start, stop, selectionStyle)
   end
   
+  
+  # Return the text contents of this control
+  # after evaluating it with ERB
   def get_contents
     ERB.new(@text_ctrl.get_value).result
   end

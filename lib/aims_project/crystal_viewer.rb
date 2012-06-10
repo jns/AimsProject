@@ -60,6 +60,7 @@ class CrystalViewer < Wx::Panel
     # behavior when rotating
     @glPanel.evt_mouse_events {|evt|
       if evt.button_down
+        self.set_focus
         mouse_down(evt.get_x, evt.get_y)
       end
     }
@@ -76,7 +77,7 @@ class CrystalViewer < Wx::Panel
       end
     }
     
-    evt_char {|evt| 
+    @glPanel.evt_char {|evt| 
       nudge_dir = case evt.get_key_code
           when K_LEFT
             [-1,0,0]

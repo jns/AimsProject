@@ -101,7 +101,8 @@ module AimsProject
       end
       
       # Add configuration variables to the calculation binding
-      calc.get_binding.eval(File.read(File.join(AimsProject::CONFIG_DIR, "user_variables.rb")))
+      uvars_file = File.join(AimsProject::CONFIG_DIR, "user_variables.rb")
+      calc.get_binding.eval(File.read(uvars_file)) if File.exists?(uvars_file)
 
       # Merger user-vars to the calculation binding
       user_vars.each_pair{|sym, val|
