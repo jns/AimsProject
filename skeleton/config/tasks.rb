@@ -51,6 +51,33 @@ _cset :aims_script, "aims.sh"
   namespace :aims do 
 
     desc <<-DESC
+    Up-sync project with data transfer server
+    DESC
+    task :upsync, :roles => :data_transfer do 
+      # Verify this AimsProject can be loaded
+      project = AimsProject::Project.load(project_name)
+      find_servers(:roles => :data_transfer).each do |s|
+        # Upsync to remote directory
+        puts "Upsyncing project to #{s}..."
+        run_locally "rsync -auvz #{project.full_path} #{s}:#{remote_project_dir}/"
+      end
+    end
+    
+    desc <<-DESC
+    Down-sync project with data transfer server
+    DESC
+    task :downsync, :roles => :data_transfer do
+      # Verify this AimsProject can be loaded
+      project = AimsProject::Project.load(project_name)
+
+      find_servers(:roles => :data_transfer).each do |s|
+        # Downsync from remote directory
+        puts "Retreiving new data from #{s}"
+        run_locally "rsync -auvz #{s}:#{remote_project_dir}/#{project.relative_path}/ #{project.full_path}/"
+      end      
+    end
+
+    desc <<-DESC
     Synchronize with the remote computation cluster.
     DESC
     task :synchronize, :roles => :data_transfer do 

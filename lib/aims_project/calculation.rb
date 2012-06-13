@@ -42,6 +42,9 @@ module AimsProject
     # The calculation subdirectory, (can be nil)
     attr_accessor :calc_subdir
 
+    # An array of (#to_s) items that are the calculation history  
+    attr_accessor :history
+
     # Find all calculations in the current directory 
     # with a given status
     def Calculation.find_all(status)
@@ -176,9 +179,12 @@ module AimsProject
     
     # Initialize a new calculation.  Consider using Calculation#create 
     # to generate the directory structure as well.
+    # @param [String] geometry the filename of the input geometry
+    # @param [String] control the filename of the input control 
     def initialize(geometry, control)
       self.geometry = File.basename(geometry)
       self.control = File.basename(control)
+      self.history = Array.new
     end
 
     # Serialize this calculation as a yaml file
@@ -273,7 +279,7 @@ module AimsProject
     end
     
     # Parse the geometry.in.next_step file in the calculation directory
-    # if it exists and return the Aims::UnitCell object or nil
+    # if it exists and return the Aims::Geometry object or nil
     def geometry_next_step
       g_file = File.join(calculation_directory, "geometry.in.next_step")
       if File.exists?(g_file)

@@ -27,7 +27,7 @@ class CrystalViewer < Wx::Panel
   attr_accessor :orthographic, :width, :height, :picking, :atom, :x_last, :y_last
   attr_accessor :show_bonds, :lighting, :show_supercell, :show_clip_planes
   attr_accessor :show_xclip, :show_yclip, :show_zclip
-
+  
   attr_accessor :xmax_plane, :xmin_plane
   attr_accessor :ymax_plane, :ymin_plane
   attr_accessor :zmax_plane, :zmin_plane

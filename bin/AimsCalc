@@ -22,9 +22,10 @@ def usage
   STDERR.puts <<-END_USAGE
 usage: AimsCalc command [args]
   Valid commands are:
-  create   - Create a new calculation
-  restart  - Restart an aborted or cancelled calculation using most recent geometry 
-  rerun    - Rerun a calculation using the original geometry and control  
+  create     - Create a new calculation
+  restart    - Restart an aborted or cancelled calculation using most recent geometry 
+  rerun      - Rerun a calculation using the original geometry and control  
+  invalidate - Invalidate a geometry or control file and dependent calculations 
   help cmd - For help on a given command
 END_USAGE
 end
@@ -63,6 +64,15 @@ usage: AimsCalc rerun [calculation]
 Use this to rerun a calculation for whatever reason.  This will 
 set the calculation status back to staged. run cap aims:enqueue to 
 actually rerun the calculation.
+HELP
+  when /invalidate/
+    puts <<-HELP
+    
+usage: AimsCalc invalidate [geometry or control]
+
+Invalidate a geometry or control file.  This will mark the geometry
+or control file as well as any dependent calculations as INVALID.  
+A warning will be issued if the user tries to use the INVALID input file.
 HELP
   else
     usage
@@ -115,8 +125,8 @@ end
 def restart_calculation(calculation)
   calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
   calc = AimsProject::Calculation.load(calc_dir)
-  calc.restart_relaxation
-  puts "Created #{calc.name}"
+  newcalc = calc.restart_relaxation
+  puts "Created #{newcalc.name}"
 end
 
 # Print status information of each calculation
@@ -138,6 +148,22 @@ def rerun_calculation(calculation)
   puts
 end
 
+# Invalidate each of the geometry or control inputs specified in arguments
+def invalidate(args)
+  args.each {|arg|
+    files =  Dir.glob(File.join(AimsProject::GEOMETRY_DIR, arg))
+    files += Dir.glob(File.join(AimsProject::CONTROL_DIR, arg))
+    files.each{|f|
+      # Write a note in file header
+      puts "I would invalidate #{f} here if I was implemented..."
+      # Find all the dependent calculations
+      
+      # and set their status to invalid
+      
+    }
+  }
+end
+
 # Run the desired command
 begin
   args = ARGV
@@ -151,6 +177,8 @@ begin
     calc_statuses
   when /rerun/
     rerun_calculation(args[0])
+  when /invalidate/
+    invalidate(args)
   when /help/
     help(args[0])
   else

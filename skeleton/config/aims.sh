@@ -41,7 +41,7 @@ function setStatus() {
 
 # setup traps for early program termination
 # qsub with the -notify flag will send SIGUSR1(30) or SIGUSR2(31) before killing a job
-trap 'setStatus "ABORTED"; exit;' 2 15 30 31
+trap 'setStatus "ABORTED"; exit;' SIGUSR1 SIGUSR2
 
 # Set the status to running
 setJobID
