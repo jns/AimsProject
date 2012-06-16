@@ -77,6 +77,8 @@ class Project
       # files in each calculation directory
       def calculations
         calc_status_files = Dir.glob(File.join(AimsProject::CALCULATION_DIR, "*", AimsProject::CALC_STATUS_FILENAME))
+        # pick up sub-calculations
+        calc_status_files += Dir.glob(File.join(AimsProject::CALCULATION_DIR, "*", "*", AimsProject::CALC_STATUS_FILENAME))
         calc_status_files.collect{|f|
           Calculation.load(File.dirname(f))
         }

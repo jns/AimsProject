@@ -83,20 +83,20 @@ _cset :aims_script, "aims.sh"
     task :synchronize, :roles => :data_transfer do 
       # Verify this AimsProject can be loaded
       project = AimsProject::Project.load(project_name)
-
-      find_servers(:roles => :data_transfer).each do |s|
-        # Upsync to remote directory
-        puts "Upsyncing project to #{s}..."
-        run_locally "rsync -auvz #{project.full_path} #{s}:#{remote_project_dir}/"
-
-        # Downsync from remote directory
-        puts "Retreiving new data from #{s}"
-        run_locally "rsync -auvz #{s}:#{remote_project_dir}/#{project.relative_path}/ #{project.full_path}/"
-      end
+      upsync
+      downsync
     end
 
     task :env, :roles => :queue_submission do 
       run "env"
+    end
+    
+    task :qstat, :roles => :queue_submission do
+      find_servers(:roles => :queue_submission).each do |s|
+        # Upsync to remote directory
+        stream qstat_cmd
+      end
+      
     end
 
     desc <<-DESC

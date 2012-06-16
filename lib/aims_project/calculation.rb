@@ -100,7 +100,7 @@ module AimsProject
 
       # Define the calculation sub-directory if user_vars exists
       unless user_vars.empty?
-        calc.calc_subdir = user_vars.keys.collect{|k| (k.to_s + "=" + user_vars[k].to_s).gsub('@', '').gsub(' ','_') }.join(",")
+        calc.calc_subdir = user_vars.keys.collect{|k| (k.to_s + "=" + user_vars[k].to_s).gsub('@', '').gsub(' ','_') }.join("..")
       end
       
       # Add configuration variables to the calculation binding

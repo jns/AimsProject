@@ -19,6 +19,9 @@ set :memory, 1024
 # The time limit for each calculation
 set :time, 24
 
+# Set the qstat command
+set :qstat_cmd, "qstat -u jns"
+
 # The qsub command to execute
 # aims_script is predefined to be 'aims.sh', if this is unsuitable
 # it can be reset with: set :aims_script, 'foo'

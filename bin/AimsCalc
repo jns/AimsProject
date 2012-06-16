@@ -134,7 +134,7 @@ def calc_statuses
   project_obj_files = Dir["*.yaml"]
   project = AimsProject::Project.load(project_obj_files.first)
   project.calculations.each{|c|
-      puts c.to_yaml
+    puts "%-30s\t%-30s\t%15s" % [c.geometry[0..30], c.control[0..30], c.status]
   }
 end
 
