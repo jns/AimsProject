@@ -88,14 +88,16 @@ end
 #        is used to evaluate geometry and control.
 def build_calculation(geometry, control, args)
   begin
+    # a hash to store the user defined variables
     vars = {}
     
     # Condition format of input user variables
     args.each{|arg| 
       if arg =~ /(.*)=(.*)/
+        # Split key=value pairs
         symbol = $1
         value = $2
-        # Prefix with an @
+        # Prefix all variables with an @
         sym = if symbol.to_s =~ /^@.*/
           symbol.to_sym
         else
@@ -111,6 +113,7 @@ def build_calculation(geometry, control, args)
           value
         end
         
+        # Set the variable in the Vars hash
         vars[sym] = val
       end
     }

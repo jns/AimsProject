@@ -113,12 +113,15 @@ module AimsProject
       }
       
 
+      # Check file existence
       raise "Unable to locate #{control_in}" unless File.exists?(control_in) 
       raise "Unable to locate #{geometry_in}" unless File.exists?(geometry_in)
 
+      # Validate the files
       raise "#{geometry_in} has changed since last use" unless check_version(geometry_in)
       raise "#{control_in} has changed since last use" unless check_version(control_in)
 
+      # Validate that the directory doesn't already exist
       if Dir.exists? calc.calculation_directory
         raise "Could not create calculation.\n #{calc.calculation_directory} already exists. \n\n If you really want to re-create this calculation, then manually delete it and try again. \n"
       end

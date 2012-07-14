@@ -575,6 +575,13 @@ class CrystalViewer < Wx::Panel
     # glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, @@current_cell.to_s[0])
   end
 
+  #
+  # Draw a plane
+  # use the vertices defined in pLoop as the boundary of the plane
+  def draw_plane(plane, pLoop)
+    
+  end
+
   def draw_clip_planes
     return unless self.unit_cell
     atoms = self.unit_cell[self.current_cell]
