@@ -20,6 +20,7 @@ EOS
   control_value_accessor :show_clip_planes, :show_xclip, :show_yclip, :show_zclip
   control_value_accessor :x_repeat, :y_repeat, :z_repeat
   control_value_accessor :correct
+  control_value_accessor :transparent_bg
   
   attr_accessor :update_unit_cell
   
@@ -69,6 +70,9 @@ EOS
      @correct = Wx::CheckBox.new(panel1, :label => "Correct Geometry")
      panel1.sizer.add(@correct, 0, Wx::ALL, border)
 
+     @transparent_bg = Wx::CheckBox.new(panel1, :label => "Transparent BG")
+     panel1.sizer.add(@transparent_bg, 0, Wx::ALL, border)
+
      sizer = GridSizer.new(2,1)
      sizer.add(StaticText.new(panel1, :label => "Bond Length"))
      @bond_length = SpinCtrl.new(panel1, :min => 1, :max => 100, :value => "4")
@@ -78,6 +82,7 @@ EOS
      evt_checkbox(@show_bonds) {|evt| @app.update_viewer}
      evt_checkbox(@show_lighting) {|evt| @app.update_viewer}
      evt_checkbox(@show_cell) {|evt| @app.update_viewer}
+     evt_checkbox(@transparent_bg) {|evt| @app.update_viewer}
      evt_checkbox(@correct) {|evt| 
         self.update_unit_cell = true
         @app.update_viewer

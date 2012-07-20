@@ -10,6 +10,10 @@ class CrystalViewer < Wx::Panel
   # An array of Aims::UnitCell's to display
   attr_reader :unit_cell
 
+  # How many times to repeat the unit cell
+  # A three element vector
+  attr_accessor :repeat
+
   # If displaying multiple, then the current cell
   attr_accessor :current_cell
 
@@ -126,6 +130,7 @@ class CrystalViewer < Wx::Panel
     self.atoms_changed = true
     self.hiRes
     self.mouse_motion_func = :rotate
+    self.repeat = Vector[1,1,1]
     
   end
 
@@ -324,8 +329,21 @@ class CrystalViewer < Wx::Panel
     position_camera
     add_lights if self.lighting
     outline_supercell if self.show_supercell
-    draw_bonds if self.show_bonds
-    draw_lattice
+      
+    if self.unit_cell
+      atoms = self.unit_cell[self.current_cell]
+      repeat[0].times do |i|
+        repeat[1].times do |j|
+          repeat[2].times do |k|
+            
+            origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
+
+            draw_bonds(origin) if self.show_bonds
+            draw_lattice(origin)
+          end
+        end
+      end
+    end
     draw_clip_planes
     
     @glPanel.swap_buffers
@@ -359,6 +377,7 @@ class CrystalViewer < Wx::Panel
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST)
 
     if self.lighting
       glEnable(GL_LIGHTING)
@@ -505,7 +524,7 @@ class CrystalViewer < Wx::Panel
     glEnd()        
   end
 
-  def draw_bonds
+  def draw_bonds(origin = [0,0,0])
     return unless self.unit_cell
     atoms = self.unit_cell[self.current_cell]
     return unless atoms
@@ -514,13 +533,13 @@ class CrystalViewer < Wx::Panel
     black.apply(false)
     glBegin(GL_LINES)
     atoms.bonds.each{|b|
-      glVertex3f(b[0].x, b[0].y, b[0].z)
-      glVertex3f(b[1].x, b[1].y, b[1].z)				
+      glVertex3f(origin[0] + b[0].x, origin[1] + b[0].y, origin[2] + b[0].z)
+      glVertex3f(origin[0] + b[1].x, origin[1] + b[1].y, origin[2] + b[1].z)				
     }
     glEnd()
   end
 
-  def draw_lattice
+  def draw_lattice(origin = [0,0,0])
 
     return unless self.unit_cell
 
@@ -555,10 +574,11 @@ class CrystalViewer < Wx::Panel
 
     for a in atoms
       a.material.apply(self.lighting)
+
       # Load a new matrix onto the stack
       glPushMatrix()
       glPushName(a.id) if self.picking
-      glTranslatef(a.x, a.y, a.z)
+      glTranslatef(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z)
       gluSphere(sphere_quadric, rmin+(a.z - zmin)*rscale, slices, stacks)            
       glPopName() if picking
       glPopMatrix()
@@ -577,9 +597,14 @@ class CrystalViewer < Wx::Panel
 
   #
   # Draw a plane
-  # use the vertices defined in pLoop as the boundary of the plane
-  def draw_plane(plane, pLoop)
-    
+  # use the vertices defined in lineLoop as the boundary of the plane
+  def draw_plane(plane, lineLoop)
+    glBegin(GL_TRIANGLE_FAN)
+    glNormal3f(plane.a, plane.b, plane.c)
+    lineLoop.each{|p| 
+        glVertex3f(p[0], p[1], p[2])
+    }
+    glEnd()
   end
 
   def draw_clip_planes
@@ -599,59 +624,48 @@ class CrystalViewer < Wx::Panel
 
     # draw z_planes
     # The are bounded by the min and max points in the x-y plane
-    glBegin(GL_QUADS)
 
     if self.show_zclip
       z = -1*@zmax_plane.distance_to_point(0,0,0)
-      glNormal3f(0, 0, 1)
-      glVertex3f(bbx1, bby1, z)
-      glVertex3f(bbx2, bby1, z)
-      glVertex3f(bbx2, bby2, z)
-      glVertex3f(bbx1, bby2, z)
+      draw_plane(@zmax_plane, [[bbx1, bby1, z],
+                               [bbx2, bby1, z],
+                               [bbx2, bby2, z], 
+                               [bbx1, bby2, z]])
 
-      z = @zmin_plane.distance_to_point(0,0,0)
-      glNormal3f(0, 0, -1)
-      glVertex3f(bbx1, bby1, z)
-      glVertex3f(bbx2, bby1, z)
-      glVertex3f(bbx2, bby2, z)
-      glVertex3f(bbx1, bby2, z)
+       z = @zmin_plane.distance_to_point(0,0,0)
+       draw_plane(@zmin_plane, [[bbx1, bby1, z],
+                                [bbx2, bby1, z],
+                                [bbx2, bby2, z], 
+                                [bbx1, bby2, z]])
     end
 
     if self.show_xclip
       x = -1*@xmax_plane.distance_to_point(0,0,0)
-      glNormal3f(1, 0, 0)
-      glVertex3f(x, bby1, bbz1)
-      glVertex3f(x, bby1, bbz2)
-      glVertex3f(x, bby2, bbz2)
-      glVertex3f(x, bby2, bbz1)
+      draw_plane(@xmax_plane, [[x, bby1, bbz1],
+                               [x, bby1, bbz2],
+                               [x, bby2, bbz2], 
+                               [x, bby2, bbz1]])
 
-      x = @xmin_plane.distance_to_point(0,0,0)
-      glNormal3f(-1, 0, 0)
-      glVertex3f(x, bby1, bbz1)
-      glVertex3f(x, bby1, bbz2)
-      glVertex3f(x, bby2, bbz2)
-      glVertex3f(x, bby2, bbz1)          
+       x = @xmin_plane.distance_to_point(0,0,0)
+       draw_plane(@xmin_plane, [[x, bby1, bbz1],
+                                [x, bby1, bbz2],
+                                [x, bby2, bbz2], 
+                                [x, bby2, bbz1]])
     end
 
     if self.show_yclip
       y = -1*@ymax_plane.distance_to_point(0,0,0)
-      glNormal3f(0, 1, 0)
-      glVertex3f(bbx1, y, bbz1)
-      glVertex3f(bbx1, y, bbz2)
-      glVertex3f(bbx2, y, bbz2)
-      glVertex3f(bbx2, y, bbz1)
+      draw_plane(@ymax_plane, [[bbx1, y, bbz1],
+                               [bbx1, y, bbz2],
+                               [bbx2, y, bbz2], 
+                               [bbx2, y, bbz1]])
 
-      y = @ymin_plane.distance_to_point(0,0,0)
-      glNormal3f(0, -1, 0)
-      glVertex3f(bbx1, y, bbz1)
-      glVertex3f(bbx1, y, bbz2)
-      glVertex3f(bbx2, y, bbz2)
-      glVertex3f(bbx2, y, bbz1)          
+       y = @ymin_plane.distance_to_point(0,0,0)
+       draw_plane(@ymin_plane, [[bbx1, y, bbz1],
+                                [bbx1, y, bbz2],
+                                [bbx2, y, bbz2], 
+                                [bbx2, y, bbz1]])
     end
-
-
-    glEnd
-
 
   end
 
@@ -694,6 +708,23 @@ class CrystalViewer < Wx::Panel
 
     glReadPixels(0, 0, self.width, self.height, Gl::GL_RGB, Gl::GL_UNSIGNED_BYTE)
 
+  end
+  
+  def alpha_image_data
+    # 1 byte/pixel
+    bytewidth = self.width;
+    
+    bytes = bytewidth*height;
+    @glPanel.set_current
+    glFinish
+
+    # Setup pixel store
+    glPixelStorei(Gl::GL_PACK_ALIGNMENT, 1) # Force byte alignment
+    glPixelStorei(Gl::GL_PACK_ROW_LENGTH, 0)
+    glPixelStorei(Gl::GL_PACK_SKIP_ROWS, 0)
+    glPixelStorei(Gl::GL_PACK_SKIP_PIXELS, 0)
+    
+    glReadPixels(0, 0, self.width, self.height, Gl::GL_ALPHA, Gl::GL_UNSIGNED_BYTE)
   end
 
 end

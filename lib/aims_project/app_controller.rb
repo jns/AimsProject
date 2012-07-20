@@ -163,13 +163,16 @@ class AppController < Wx::App
      
      if @original_uc and @inspector.update_unit_cell
        if @inspector.correct
+         # @viewer.unit_cell = @original_uc.correct
          @viewer.unit_cell = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat).correct
        else
+         # @viewer.unit_cell = @original_uc
          @viewer.unit_cell = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat)
        end
        @inspector.update_unit_cell = false
      end
      
+     # @viewer.repeat = [@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat]
      @viewer.show_bonds = @inspector.show_bonds
      @viewer.bond_length = @inspector.bond_length
      @viewer.lighting = @inspector.show_lighting
@@ -177,7 +180,7 @@ class AppController < Wx::App
      @viewer.show_xclip = @inspector.show_xclip
      @viewer.show_yclip = @inspector.show_yclip
      @viewer.show_zclip = @inspector.show_zclip
-     
+     @viewer.background.alpha = ((@inspector.transparent_bg) ? 0 : 1)
      @viewer.draw_scene
    end
 
@@ -279,12 +282,9 @@ class AppController < Wx::App
        if Wx::ID_OK == fd.show_modal
          @working_dir = fd.get_directory
 
-       		# Read the front left buffer
-          pixels = @viewer.rgb_image_data
-   		
        		image = Image.new(@viewer.width, @viewer.height)
-          image.set_rgb_data(pixels)
-
+          image.set_rgb_data(@viewer.rgb_image_data)
+          image.set_alpha_data(@viewer.alpha_image_data)
           puts "Writing #{fd.get_path}"
           image.mirror(false).save_file(fd.get_path)
         end

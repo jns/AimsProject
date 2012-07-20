@@ -121,6 +121,7 @@ def build_calculation(geometry, control, args)
     puts "Created #{calc.calculation_directory}"
   rescue 
     puts $!.message
+    puts $!.backtrace
   end
 end
 
@@ -143,8 +144,12 @@ end
 
 # Set the calculation status back to staged
 def rerun_calculation(calculation)
-  calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
-  calc = AimsProject::Calculation.load(calc_dir)
+  calc = begin
+    AimsProject::Calculation.load(calculation)
+  rescue ObjectFileNotFoundException
+    calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
+    calc = AimsProject::Calculation.load(calc_dir)
+  end
   calc.status = AimsProject::STAGED
   calc.save
   puts "Calculation status set to STAGED. Run cap aims:enqueue to execute."
