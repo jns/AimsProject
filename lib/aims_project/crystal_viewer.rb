@@ -538,6 +538,34 @@ class CrystalViewer < Wx::Panel
     }
     glEnd()
   end
+  
+  # 
+  # Draw an atom 
+  # @param x The x-coordinate
+  # @param y The y-coordinate
+  # @param z The z-coordinate
+  # @param r The radius
+  # @param name The name of the sphere (for picking)
+  # @return a sphere_quadric for reuse if desired. Make sure to delete it when done
+  def draw_sphere(x,y,z,r, name, sphere_quadric=nil)
+
+    unless sphere_quadric 
+      sphere_quadric = gluNewQuadric()
+      gluQuadricDrawStyle(sphere_quadric, GLU_FILL)
+      gluQuadricNormals(sphere_quadric, GLU_SMOOTH)
+      gluQuadricOrientation(sphere_quadric, GLU_OUTSIDE)
+    end
+
+    # Load a new matrix onto the stack
+    glPushMatrix()
+    glPushName(name) if self.picking
+    glTranslatef(x, y, z)
+    gluSphere(sphere_quadric, r, slices, stacks)            
+    glPopName() if picking
+    glPopMatrix()
+    
+    sphere_quadric
+  end
 
   def draw_lattice(origin = [0,0,0])
 
@@ -550,10 +578,6 @@ class CrystalViewer < Wx::Panel
     # Create sphere object
     rmin = 0.3
     rmax = 0.5
-    sphere_quadric = gluNewQuadric()
-    gluQuadricDrawStyle(sphere_quadric, GLU_FILL)
-    gluQuadricNormals(sphere_quadric, GLU_SMOOTH)
-    gluQuadricOrientation(sphere_quadric, GLU_OUTSIDE)
 
     # Calculate radius scaling factor vs. depth
     rrange = rmax - rmin
@@ -572,16 +596,10 @@ class CrystalViewer < Wx::Panel
       self.atoms_changed = false
     end
 
+    sphere_quadric = nil
     for a in atoms
       a.material.apply(self.lighting)
-
-      # Load a new matrix onto the stack
-      glPushMatrix()
-      glPushName(a.id) if self.picking
-      glTranslatef(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z)
-      gluSphere(sphere_quadric, rmin+(a.z - zmin)*rscale, slices, stacks)            
-      glPopName() if picking
-      glPopMatrix()
+      sphere_quadric = draw_sphere(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z, rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
     end
     gluDeleteQuadric(sphere_quadric)
 
