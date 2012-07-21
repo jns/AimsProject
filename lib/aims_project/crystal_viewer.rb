@@ -600,6 +600,22 @@ class CrystalViewer < Wx::Panel
     for a in atoms
       a.material.apply(self.lighting)
       sphere_quadric = draw_sphere(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z, rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
+
+      # Complete the unit cell
+      # if atoms.lattice_vectors
+      #   if 0 == @xmin_plane.distance_to_point(a.x, a.y, a.z)
+      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[0][0], a.y + atoms.lattice_vectors[0][1], a.z + atoms.lattice_vectors[0][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
+      #   end
+      # 
+      #   if 0 == @ymin_plane.distance_to_point(a.x, a.y, a.z)
+      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[1][0], a.y + atoms.lattice_vectors[1][1], a.z + atoms.lattice_vectors[1][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
+      #   end
+      # 
+      #   if 0 == @zmin_plane.distance_to_point(a.x, a.y, a.z)
+      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[2][0], a.y + atoms.lattice_vectors[2][1], a.z + atoms.lattice_vectors[2][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
+      #   end
+      # end
+      
     end
     gluDeleteQuadric(sphere_quadric)
 
