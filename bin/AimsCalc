@@ -24,7 +24,8 @@ usage: AimsCalc command [args]
   Valid commands are:
   create     - Create a new calculation
   restart    - Restart an aborted or cancelled calculation using most recent geometry 
-  rerun      - Rerun a calculation using the original geometry and control  
+  rerun      - Rerun a calculation using the original geometry and control
+  rename     - Rename a control or geometry file and all dependent calculations  
   invalidate - Invalidate a geometry or control file and dependent calculations 
   help cmd - For help on a given command
 END_USAGE
@@ -64,6 +65,13 @@ usage: AimsCalc rerun [calculation]
 Use this to rerun a calculation for whatever reason.  This will 
 set the calculation status back to staged. run cap aims:enqueue to 
 actually rerun the calculation.
+HELP
+  when /rename/
+    puts <<-HELP
+
+usage: AimsCalc rename [control or geometry]
+
+Renames a control or geometry file and all dependent calculations.
 HELP
   when /invalidate/
     puts <<-HELP
@@ -156,6 +164,13 @@ def rerun_calculation(calculation)
   puts
 end
 
+# Rename a geometry or control file and all dependent calculations
+# @param file The name of the original file
+# @param newname The new name for the file
+def rename(file, newname)
+  raise "Sorry... 'AimsCalc rename' isn't implemented yet."
+end
+
 # Invalidate each of the geometry or control inputs specified in arguments
 def invalidate(args)
   args.each {|arg|
@@ -187,6 +202,8 @@ begin
     rerun_calculation(args[0])
   when /invalidate/
     invalidate(args)
+  when /rename/
+    rename(args[0], args[1])
   when /help/
     help(args[0])
   else
