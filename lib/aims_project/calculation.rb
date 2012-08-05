@@ -45,6 +45,13 @@ module AimsProject
     # An array of (#to_s) items that are the calculation history  
     attr_accessor :history
 
+    # Timestamp indicating creation of this calculation
+    attr_accessor :created_at
+    
+    # Timestamp indicating last update of this calculation
+    # (currently only updates when saved)
+    attr_accessor :updated_at
+
     # Find all calculations in the current directory 
     # with a given status
     def Calculation.find_all(status)
@@ -95,6 +102,8 @@ module AimsProject
     def Calculation.create(geometry, control, user_vars = {})
 
       calc = Calculation.new(geometry, control)
+      calc.created_at = Time.new
+
       control_in = calc.control_file
       geometry_in = calc.geometry_file
 
@@ -165,7 +174,15 @@ module AimsProject
       
       # Create a new geometry file
       geometry_orig = self.geometry_file
-      n = 0
+      
+      # If restarting a restart, then increment the digit
+      if (geometry_orig.split(".").last =~ /restart(\d+)/)
+        n = $1.to_i
+        geometry_orig = geometry_orig.split(".")[0...-1].join(".")
+      else
+        n = 0
+      end
+
       begin 
         n += 1
         geometry_new = geometry_orig + ".restart#{n}"
@@ -192,6 +209,7 @@ module AimsProject
 
     # Serialize this calculation as a yaml file
     def save(dir = nil)
+      self.updated_at = Time.new
       dir = calculation_directory unless dir
       File.open(File.join(dir, AimsProject::CALC_STATUS_FILENAME), 'w') do |f|
         f.puts YAML.dump(self)

@@ -409,8 +409,19 @@ class CrystalViewer < Wx::Panel
     glMatrixMode(GL_MODELVIEW)
 
     glInitNames
+    if self.unit_cell
+      atoms = self.unit_cell[self.current_cell]
+      repeat[0].times do |i|
+        repeat[1].times do |j|
+          repeat[2].times do |k|
+            
+            origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
-    self.draw_lattice
+            self.draw_lattice(origin)
+          end
+        end
+      end
+    end
 
     self.picking = false
 
@@ -617,7 +628,7 @@ class CrystalViewer < Wx::Panel
       # end
       
     end
-    gluDeleteQuadric(sphere_quadric)
+    gluDeleteQuadric(sphere_quadric) if sphere_quadric
 
 
 
