@@ -84,5 +84,10 @@ class Project
         }
       end
       
+      # Retreive the geometries managed by this project.
+      def geometries
+        Dir.glob(File.join(AimsProject::GEOMETRY_DIR, "*"))
+      end
+      
 end
 end

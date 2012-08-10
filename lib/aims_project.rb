@@ -135,6 +135,7 @@ require 'aims_project/aims_project_exception.rb'
 module AimsProject
   # Constants
   STAGED   = "STAGED"
+  HOLD     = "HOLD"
   QUEUED   = "QUEUED"
   RUNNING  = "RUNNING"
   COMPLETE = "COMPLETE"

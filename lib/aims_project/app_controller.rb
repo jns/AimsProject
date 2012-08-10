@@ -21,9 +21,13 @@ class AppController < Wx::App
     @editor = nil
     @inspector = nil
     @statusbar = nil
+    @projectTree = nil
 
     # The original Unit Cell
     @original_uc = nil
+    
+    # The project
+    attr_accessor :project
     
     # Used to synchronize directory in open/save dialogs
     attr_accessor :working_dir
@@ -34,7 +38,7 @@ class AppController < Wx::App
      
         self.app_name = "AimsViewer"
         # Create the frame, toolbar and menubar and define event handlers
-        size = [500,500]
+        size = [700,550]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
         @statusbar = @frame.create_status_bar
 
@@ -42,17 +46,20 @@ class AppController < Wx::App
         @selection = {}
         
         # Create the split view        
-        splitter = SplitterWindow.new(@frame)
+        hsplitter = SplitterWindow.new(@frame)
+        splitter = SplitterWindow.new(hsplitter)
                 
         @editor = GeometryEditor.new(self, splitter)
         @viewer = CrystalViewer.new(self, splitter)
+        @tree = ProjectTree.new(self, hsplitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
         @toolbar = @frame.create_tool_bar
         populate_toolbar(@toolbar) if @toolbar
                 
         # Add to split view
-        splitter.split_horizontally(@viewer, @editor)
+        hsplitter.split_vertically(@tree, splitter, 150)
+        splitter.split_horizontally(@viewer, @editor, 450)
         
         # Check off the current tool
         set_tool

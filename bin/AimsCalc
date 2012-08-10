@@ -27,6 +27,8 @@ usage: AimsCalc command [args]
   rerun      - Rerun a calculation using the original geometry and control
   rename     - Rename a control or geometry file and all dependent calculations  
   invalidate - Invalidate a geometry or control file and dependent calculations 
+  hold       - Place a STAGED calculation into a HOLD status
+  release    - Release a calculation from HOLD, placing it back in STAGED status
   help cmd - For help on a given command
 END_USAGE
 end
@@ -82,6 +84,23 @@ Invalidate a geometry or control file.  This will mark the geometry
 or control file as well as any dependent calculations as INVALID.  
 A warning will be issued if the user tries to use the INVALID input file.
 HELP
+  when /hold/
+    puts <<-HELP
+
+usage: AimsCalc hold calculation
+
+Place a calculation that is currently STAGED into a HOLD status.  This means it will 
+not be QUEUED for calculation.  Use 'release' to re-STAGE the calculation.
+HELP
+  when /release/
+    puts <<-HELP
+    
+usage: AimsCalc release calculation
+
+Set the status for a calculation that is currently on HOLD status to STAGED. 
+This means it will be scheduled for execution the next time enqueue is run.
+HELP
+  
   else
     usage
   end
@@ -152,6 +171,26 @@ def calc_statuses
   }
 end
 
+# Place the specified calculations on HOLD status if they are staged.
+def hold(calculation)
+  calc = get_calculation_from_string(calculation)
+  if calc.hold
+    puts "Calculation status set to #{calc.status}. Use AimsCalc release to revert to STAGED"
+  else
+    puts "Unable to set status of calculation to HOLD"
+  end
+end
+
+# Release a calculation from HOLD status
+def release(calculation)
+  calc = get_calculation_from_string(calculation)
+  if calc.release
+    puts "Calculation status set to #{calc.status}."
+  else
+    puts "Unable to release calculation from HOLD"
+  end
+end
+
 # Set the calculation status back to staged
 def rerun_calculation(calculation)
   calc = begin
@@ -164,6 +203,16 @@ def rerun_calculation(calculation)
   calc.save
   puts "Calculation status set to STAGED. Run cap aims:enqueue to execute."
   puts
+end
+
+def get_calculation_from_string(str)
+  calc = begin
+    AimsProject::Calculation.load(str)
+  rescue ObjectFileNotFoundException
+    calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(str))
+    calc = AimsProject::Calculation.load(calc_dir)
+  end  
+  calc
 end
 
 # Rename a geometry or control file and all dependent calculations
@@ -206,6 +255,10 @@ begin
     invalidate(args)
   when /rename/
     rename(args[0], args[1])
+  when /hold/
+    hold(args)
+  when /release/
+    release(args)
   when /help/
     help(args[0])
   else

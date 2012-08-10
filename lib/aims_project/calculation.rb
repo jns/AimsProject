@@ -163,6 +163,29 @@ module AimsProject
       "#{geometry}.#{control}"
     end
     
+    # Set the status to HOLD.
+    # Only possible if status is currently STAGED
+    def hold
+      if STAGED == status
+        self.status = HOLD
+        save
+        return true
+      else
+        return false
+      end
+    end
+    
+    # Set the status to STAGED if current status is HOLD
+    def release
+      if HOLD == status
+        self.status = STAGED
+        save
+        return true
+      else
+        return false
+      end
+    end
+    
     # Create a new calculation that will restart a geometry relaxation 
     # calculation using the last available geometry.  
     # This method will generate a new file in 
