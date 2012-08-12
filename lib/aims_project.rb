@@ -147,6 +147,9 @@ module AimsProject
   GEOMETRY_DIR = "geometry"
   CONTROL_DIR = "control"
   CALC_STATUS_FILENAME = "calc_status.yaml"
+  PROJECT_VARIABLES_FILENAME = "project_vars.rb"
   
+  GLOBAL_CONFIG_DIR = File.join(ENV["HOME"], ".aims_project")
+  GLOBAL_VARIABLES_FILENAME = "aims_project_vars.rb"
 
 end

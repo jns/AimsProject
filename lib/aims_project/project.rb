@@ -49,6 +49,11 @@ class Project
             return p
       end
       
+      # Return the binding for this project
+      def get_binding
+        binding
+      end
+      
       # The path of this project relative to project_root_dir
       def relative_path
         name

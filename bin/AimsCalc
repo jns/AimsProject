@@ -106,6 +106,50 @@ HELP
   end
 end
 
+# Get the project associated with the current directory 
+# returns nil if unable to find a project
+def project
+  project_obj_files = Dir["*.yaml"]
+  unless project_obj_files.empty?
+    AimsProject::Project.load(project_obj_files.first)
+  else
+    raise AimsProject::AimsProjectException.new("Sorry, I can't tell what project this is.  Please move to the project root directory.")
+  end
+end
+
+# Parse command line arguments of the form a=1 b=2 into a hash 
+# suitable for evaluating in the project binding
+def parse_vars(args)
+  vars = {}
+  
+  # Condition format of input user variables
+  args.each{|arg| 
+    if arg =~ /(.*)=(.*)/
+      # Split key=value pairs
+      symbol = $1
+      value = $2
+      # Prefix all variables with an @
+      sym = if symbol.to_s =~ /^@.*/
+        symbol.to_sym
+      else
+        ("@" + symbol.to_s).to_sym
+      end
+      
+      # Cast value to Float if applicable
+      val = if value =~ /^(\d+\.*\d*)$/
+        $1.to_f
+      elsif value =~ /"(.*)"/ or value =~ /'(.*)'/
+        $1
+      else
+        value
+      end
+      
+      # Set the variable in the Vars hash
+      vars[sym] = val
+    end
+  }
+  vars
+end
 
 # Create a calculation from a geometry and control file. 
 # @param [String] geometry The name of a file that can be found in the geometry directory
@@ -116,34 +160,7 @@ end
 def build_calculation(geometry, control, args)
   begin
     # a hash to store the user defined variables
-    vars = {}
-    
-    # Condition format of input user variables
-    args.each{|arg| 
-      if arg =~ /(.*)=(.*)/
-        # Split key=value pairs
-        symbol = $1
-        value = $2
-        # Prefix all variables with an @
-        sym = if symbol.to_s =~ /^@.*/
-          symbol.to_sym
-        else
-          ("@" + symbol.to_s).to_sym
-        end
-        
-        # Cast value to Float if applicable
-        val = if value =~ /^(\d+\.*\d*)$/
-          $1.to_f
-        elsif value =~ /"(.*)"/ or value =~ /'(.*)'/
-          $1
-        else
-          value
-        end
-        
-        # Set the variable in the Vars hash
-        vars[sym] = val
-      end
-    }
+    vars = parse_vars(args)
     calc = AimsProject::Calculation.create(geometry, control, vars)
     puts "Created #{calc.calculation_directory}"
   rescue 
@@ -222,6 +239,17 @@ def rename(file, newname)
   raise "Sorry... 'AimsCalc rename' isn't implemented yet."
 end
 
+# Set project variables
+def setvar(args)
+  vars = parse_vars(args)
+  p = project
+  vars.each{|sym, val|
+    p.instance_variable_set(sym, val)
+    puts "Setting #{sym} = #{val}"
+  }
+  p.save
+end
+
 # Invalidate each of the geometry or control inputs specified in arguments
 def invalidate(args)
   args.each {|arg|
@@ -259,6 +287,8 @@ begin
     hold(args)
   when /release/
     release(args)
+  when /setvar/ 
+    setvar(args)
   when /help/
     help(args[0])
   else

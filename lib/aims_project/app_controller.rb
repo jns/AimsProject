@@ -229,7 +229,14 @@ class AppController < Wx::App
          end
        end
        puts "Opening #{file}"
-       @original_uc = Aims::GeometryParser.parse(file)
+       
+       if (project)
+         erb = ERB.new(File.read(file))
+         @original_uc = Aims::GeometryParser.parse_string(erb.result(project.get_binding))
+       else
+         @original_uc = Aims::GeometryParser.parse(file)
+       end
+       
        @frame.set_title(file)
        @viewer.unit_cell = @original_uc
        @editor.unit_cell = @original_uc
