@@ -14,5 +14,6 @@ EOF
   s.add_dependency "wxruby-ruby19", "~> 2.0.1"
   s.add_dependency "ruby-opengl2", "~> 0.60.3"
   s.add_dependency "aims", "~> 0.2.0"
+  s.add_dependency "highline", "~> 1.6.11"
   s.add_dependency "capistrano", "~> 2.11.2"
 end

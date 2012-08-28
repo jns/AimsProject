@@ -29,6 +29,7 @@ usage: AimsCalc command [args]
   invalidate - Invalidate a geometry or control file and dependent calculations 
   hold       - Place a STAGED calculation into a HOLD status
   release    - Release a calculation from HOLD, placing it back in STAGED status
+  setvar     - Set a calculation variable
   help cmd - For help on a given command
 END_USAGE
 end
@@ -100,6 +101,23 @@ usage: AimsCalc release calculation
 Set the status for a calculation that is currently on HOLD status to STAGED. 
 This means it will be scheduled for execution the next time enqueue is run.
 HELP
+
+  when /setvar/
+  puts <<-HELP
+  
+usage: AimsCalc setvar var1=value1 var2=value2 ...
+
+Set a project variable. These variables are available for use in 
+geometry and control files using embedded ruby with the @var syntax. 
+
+ex.  
+AimsCalc setvar lattice_const=5.65
+
+Then in a geometry file
+atom 0 0 0 Ga
+atom <%= [@gaas_lattice_const/4 @gaas_lattice_const/4 @gaas_lattice_const/4].join(" ") %> As 
+
+HELP
   
   else
     usage
@@ -161,6 +179,13 @@ def build_calculation(geometry, control, args)
   begin
     # a hash to store the user defined variables
     vars = parse_vars(args)
+    # Load the project variables
+    p = project
+    p.instance_variables.each{|v|
+      unless v == :@name # Ignore the project name
+        vars[v] = p.instance_variable_get(v)
+      end
+    }
     calc = AimsProject::Calculation.create(geometry, control, vars)
     puts "Created #{calc.calculation_directory}"
   rescue 

@@ -1,23 +1,58 @@
 #!/usr/bin/env ruby
 require 'aims_project'
 require 'fileutils'
+require 'highline'
+
 # Initialize an AimsProject
 # Create a directory named by the project
 # and generate the AimsProjectInfo.yaml file 
 
+ui = HighLine.new
+skeleton_dir = File.join(Dir.home, ".aims_project")
+
+unless File.exists?(skeleton_dir)
+  ui.say <<-EOF
+  
+   It looks like this is the first time you are running AimsProject.
+   
+   I can create the directory $HOME/.aims_project which will be the 
+   template for all of your future projects.  Feel free to customize the
+   files in this directory to suit your needs.  In particular, you will
+   want to customize 'Capfile' and 'aims.sh'.  And you may want to add 
+   variables that should be available to any project in 'project_variables.rb'
+   
+   EOF
+   
+   # Copy the skeleton directory tasks into config
+   script_dir = File.join(File.dirname(File.expand_path(__FILE__)), '..', 'skeleton')
+
+  if ui.agree("Can I create #{Dir.home}/.aims_project?")
+    # Create the skeleton directory in $HOME/.aims_project
+    Dir.mkdir skeleton_dir  
+    FileUtils.cp_r(File.join(script_dir, '.'), skeleton_dir)
+  else
+    ui.say("Ok, maybe next time.")
+    skeleton_dir = script_dir
+  end  
+end
+
+# Set the project name and direcory
 projectName = ARGV[0]
+unless projectName
+  projectName = ui.ask("Please specify the name of the project: ", String) {|q| q.whitespace = :remove}.to_s
+end
+
 projectDir = projectName
 
 if project = AimsProject::Project.create(projectName)
   
-  STDOUT.puts "Creating #{projectDir}..."
+  ui.say "Creating #{projectDir}..."
   
   # save the project into a directory named after the project
   project.save(projectDir)
   
   # Copy the skeleton directory tasks into config
-  dir = File.dirname(File.expand_path(__FILE__))
-  FileUtils.cp_r(File.join(dir, '..', 'skeleton', '.'), projectDir)
+  FileUtils.cp_r(File.join(skeleton_dir, '.'), projectDir)
   
   
   # Generate the default Capfile
@@ -44,6 +79,7 @@ if project = AimsProject::Project.create(projectName)
       AimsCalc create [geometry] [control]
   5) Execute the calculations with the command:
       cap aims:enqueue
+      
   EOL
   
 else 
