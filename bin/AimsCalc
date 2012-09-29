@@ -181,12 +181,7 @@ def build_calculation(geometry, control, args)
     vars = parse_vars(args)
     # Load the project variables
     p = project
-    p.instance_variables.each{|v|
-      unless v == :@name # Ignore the project name
-        vars[v] = p.instance_variable_get(v)
-      end
-    }
-    calc = AimsProject::Calculation.create(geometry, control, vars)
+    calc = AimsProject::Calculation.create(p, geometry, control, vars)
     puts "Created #{calc.calculation_directory}"
   rescue 
     puts $!.message
@@ -208,7 +203,7 @@ def calc_statuses
   project = AimsProject::Project.load(project_obj_files.first)
   format = "%-40s\t%-30s\t%-15s\t%-20s\t%-20s"
   puts format % ["GEOMETRY", "CONTROL", "STATUS", "CREATED_AT", "UPDATED_AT"]
-  project.calculations.each{|c|
+  project.calculations.sort{|a, b| a.status <=> b.status}.each{|c|
     puts format % [c.geometry[0..40], c.control[0..30], c.status, c.created_at,c.updated_at]
   }
 end

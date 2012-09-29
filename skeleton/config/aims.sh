@@ -31,7 +31,7 @@ function setStatus() {
         if [ ! -f $LOCKFILE ]; then
                 touch $LOCKFILE;
         status=$1;
-        date_str=`date +'%Y-%m-%d %T %z'`
+        date_str=`date +'%Y-%m-%d %T %:z'`
         TMPFILE=calc_status.tmp;
         sed "s/status: .*/status: ${status}/; s/updated_at: .*/updated_at: ${date_str}/" $STATUSFILE > $TMPFILE;
         mv $TMPFILE $STATUSFILE;

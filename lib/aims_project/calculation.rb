@@ -51,6 +51,16 @@ module AimsProject
     # Timestamp indicating last update of this calculation
     # (currently only updates when saved)
     attr_accessor :updated_at
+    def updated_at
+      # Cast value to Date
+      # Do this in the accessor because loading from YAML bypasses the setter method
+      if @updated_at.is_a? String
+        @updated_at = Date.parse(@updated_at)
+      elsif @updated_at.nil?
+        @updated_at = Date.new(0)
+      end
+      @updated_at
+    end
 
     # Find all calculations in the current directory 
     # with a given status
@@ -99,7 +109,7 @@ module AimsProject
     # @param [Hash<Symbol, Object>] user_vars A symbol=>Object hash of variables that will be available when 
     #                     evaluating the geometry and control files using embedded ruby  
     #                     This hash is also used to generate a calculation subdirectory
-    def Calculation.create(geometry, control, user_vars = {})
+    def Calculation.create(project, geometry, control, user_vars = {})
 
       calc = Calculation.new(geometry, control)
       calc.created_at = Time.new
@@ -116,7 +126,18 @@ module AimsProject
       uvars_file = File.join(AimsProject::CONFIG_DIR, "user_variables.rb")
       calc.get_binding.eval(File.read(uvars_file)) if File.exists?(uvars_file)
 
-      # Merger user-vars to the calculation binding
+      # Merge project variables into calcuation binding
+      if project
+        project.instance_variables.each{|v|
+          if v == :@name # Ignore the project name
+            calc.instance_variable_set(:@project_name, project.instance_variable_get(v))
+          else
+            calc.instance_variable_set(v, project.instance_variable_get(v))
+          end
+        }
+      end
+
+      # Merge user-vars to the calculation binding
       user_vars.each_pair{|sym, val|
         calc.instance_variable_set(sym, val)
       }
@@ -216,7 +237,7 @@ module AimsProject
         f.puts self.geometry_next_step.format_geometry_in
       end
       
-      Calculation.create(geometry_new, self.control)
+      Calculation.create(nil, geometry_new, self.control)
       
     end
     

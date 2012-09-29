@@ -28,7 +28,7 @@ set :qstat_cmd, "qstat -u jns"
 # aims_script is predefined to be 'aims.sh', if this is unsuitable
 # it can be reset with: set :aims_script, 'foo'
 set(:qsub) { 
-  "parallel.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; sed '/^time/ i\ trap : SIGUSR1 SIGUSR2' #{aims_script}.cmd > #{aims_script}.cmd.new; mv #{aims_script}.cmd.new #{aims_script}.cmd; qsub -notify #{aims_script}.cmd"
+  "parallel.q -n #{nodes} -d #{memory} -t #{time} -ns -k #{aims_script}; sed '/\\btime\\b/ i\\ trap : SIGUSR1 SIGUSR2' #{aims_script}.cmd > #{aims_script}.cmd.new; mv #{aims_script}.cmd.new #{aims_script}.cmd; qsub -notify #{aims_script}.cmd"
 }
 
 # The remote host for data transfer of large files 
