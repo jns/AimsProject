@@ -1,6 +1,8 @@
 
 require 'fileutils'
 require 'erb'
+require 'date'
+
 #
 # A calculation is a combination of a geometry, a control file, and an output
 # Each calculation runs in its own directory
@@ -46,20 +48,35 @@ module AimsProject
     attr_accessor :history
 
     # Timestamp indicating creation of this calculation
-    attr_accessor :created_at
+    attr_writer :created_at
+    def created_at
+      @created_at = cast_as_date(@created_at)
+    end
     
     # Timestamp indicating last update of this calculation
     # (currently only updates when saved)
-    attr_accessor :updated_at
+    attr_writer :updated_at
     def updated_at
       # Cast value to Date
       # Do this in the accessor because loading from YAML bypasses the setter method
-      if @updated_at.is_a? String
-        @updated_at = Date.parse(@updated_at)
-      elsif @updated_at.nil?
-        @updated_at = Date.new(0)
-      end
-      @updated_at
+      @updated_at = cast_as_date(@updated_at)
+    end
+
+    def cast_as_date(obj)
+      if obj.is_a? Date or obj.is_a? Time or obj.is_a? DateTime
+        obj.to_datetime
+      elsif obj.is_a? String
+        DateTime.parse(obj)
+        # unless s
+        #   s = DateTime.strptime(obj, "%F %T %z")
+        # end
+        # unless s
+        #   s = DateTime.strptime(obj, "%FT%s%z")
+        # end
+        # s
+      else
+        DateTime.new(0)
+      end      
     end
 
     # Find all calculations in the current directory 

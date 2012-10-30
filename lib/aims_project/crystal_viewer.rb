@@ -31,6 +31,7 @@ class CrystalViewer < Wx::Panel
   attr_accessor :orthographic, :width, :height, :picking, :atom, :x_last, :y_last
   attr_accessor :show_bonds, :lighting, :show_supercell, :show_clip_planes
   attr_accessor :show_xclip, :show_yclip, :show_zclip
+  attr_accessor :render_mode
   
   attr_accessor :xmax_plane, :xmin_plane
   attr_accessor :ymax_plane, :ymin_plane
@@ -131,7 +132,7 @@ class CrystalViewer < Wx::Panel
     self.hiRes
     self.mouse_motion_func = :rotate
     self.repeat = Vector[1,1,1]
-    
+    self.render_mode = :ball_stick
   end
 
 
@@ -610,8 +611,13 @@ class CrystalViewer < Wx::Panel
     sphere_quadric = nil
     for a in atoms
       a.material.apply(self.lighting)
-      sphere_quadric = draw_sphere(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z, rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
-
+      case self.render_mode 
+      when :ball_stick
+        r = rmin+(a.z - zmin)*rscale
+      else
+        r = 2.0
+      end
+      sphere_quadric = draw_sphere(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z, r, a.id, sphere_quadric)
       # Complete the unit cell
       # if atoms.lattice_vectors
       #   if 0 == @xmin_plane.distance_to_point(a.x, a.y, a.z)
