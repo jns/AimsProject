@@ -220,7 +220,7 @@ class CrystalViewer < Wx::Panel
     self.atom = pick_object(x,y)
     if self.atom
       @controller.select_atom(self.atom)
-      puts self.atom.format_geometry_in
+      # puts self.atom.format_geometry_in
     end
     self.hiRes
 
@@ -442,7 +442,7 @@ class CrystalViewer < Wx::Panel
     end
 
 
-    self.unit_cell[self.current_cell].find{|a| a.id == names[0]}
+    self.unit_cell[self.current_cell].find{|a| a.id == names.last}
   end
 
   def position_camera
@@ -465,7 +465,9 @@ class CrystalViewer < Wx::Panel
 
   def add_lights
     light0_position = [1,1,1,0]
-    light1_position = [-1,-1,-1,0]
+    light1_position = [-1,-1,1,1]
+    glLightModel(GL_LIGHT_MODEL_AMBIENT, [0.6, 0.6, 0.6 ,1.0])
+    # glLightModel(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE)
     glLightfv(GL_LIGHT0, GL_POSITION, light0_position)              
     glLightfv(GL_LIGHT1, GL_POSITION, light1_position)
   end

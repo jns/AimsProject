@@ -35,7 +35,16 @@ class GeometryEditor < Wx::ScrolledWindow
   end
   
   def select_atom(atom)
-    # self.text_ctrl.set_style(start, stop, selectionStyle)
+    selectionStyle = Wx::RichTextAttr.new(Wx::BLACK, Wx::Colour.new("YELLOW"))
+    
+    pattern = atom.format_geometry_in
+    matchdata = self.text_ctrl.get_value.match(pattern)
+    lineStart = matchdata.begin(0)
+    lineEnd = matchdata.end(0)
+    # self.text_ctrl.set_style(lineStart...lineEnd, selectionStyle)
+    self.text_ctrl.set_selection(lineStart, lineEnd)
+    self.text_ctrl.set_caret_position(lineStart)
+    self.text_ctrl.show_position(lineStart)
   end
   
   
