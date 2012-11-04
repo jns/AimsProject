@@ -39,12 +39,15 @@ class GeometryEditor < Wx::ScrolledWindow
     
     pattern = atom.format_geometry_in
     matchdata = self.text_ctrl.get_value.match(pattern)
-    lineStart = matchdata.begin(0)
-    lineEnd = matchdata.end(0)
-    # self.text_ctrl.set_style(lineStart...lineEnd, selectionStyle)
-    self.text_ctrl.set_selection(lineStart, lineEnd)
-    self.text_ctrl.set_caret_position(lineStart)
-    self.text_ctrl.show_position(lineStart)
+    puts matchdata
+    if matchdata
+      lineStart = matchdata.begin(0)
+      lineEnd = matchdata.end(0)
+      # self.text_ctrl.set_style(lineStart...lineEnd, selectionStyle)
+      self.text_ctrl.set_selection(lineStart, lineEnd)
+      self.text_ctrl.set_caret_position(lineStart)
+      self.text_ctrl.show_position(lineStart)
+    end
   end
   
   

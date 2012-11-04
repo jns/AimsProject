@@ -38,7 +38,7 @@ class AppController < Wx::App
      
         self.app_name = "AimsViewer"
         # Create the frame, toolbar and menubar and define event handlers
-        size = [700,550]
+        size = [1200,800]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
         @statusbar = @frame.create_status_bar
 
@@ -171,11 +171,13 @@ class AppController < Wx::App
      if @original_uc and @inspector.update_unit_cell
        if @inspector.correct
          # @viewer.unit_cell = @original_uc.correct
-         @viewer.unit_cell = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat).correct
+         new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat).correct
        else
          # @viewer.unit_cell = @original_uc
-         @viewer.unit_cell = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat)
+         new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat)
        end
+       @viewer.unit_cell = new_geom
+       @editor.unit_cell = new_geom
        @inspector.update_unit_cell = false
      end
      
@@ -215,9 +217,23 @@ class AppController < Wx::App
      @inspector.hide
    end
    
+   def show_calculation(calc)
+     begin
+
+       @frame.set_title(calc.name)
+       @original_uc = calc.final_geometry
+       @viewer.unit_cell = @original_uc
+       @editor.unit_cell = @original_uc
+       @inspector.update(@viewer)
+       @viewer.draw_scene
+       
+     rescue e
+       error_dialog(e)
+     end
+   end
    
    # Display a file dialog and attempt to open and display the file
-   def open_file(file = nil)
+   def open_geometry_file(file = nil)
      begin
        unless file
          fd = FileDialog.new(@frame, :message => "Open", :style => FD_OPEN, :default_dir => @working_dir)
@@ -246,6 +262,7 @@ class AppController < Wx::App
        error_dialog(dang)
      end
    end
+   alias_method :open_file, :open_geometry_file
    
    # Save the geometry
    def save_geometry

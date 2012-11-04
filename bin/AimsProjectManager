@@ -15,6 +15,7 @@ require 'aims_project/inspector.rb'
 require 'aims_project/crystal_viewer.rb'
 require 'aims_project/geometry_editor.rb'
 require 'aims_project/project_tree.rb'
+require 'aims_project/calculation_tree.rb'
 require 'aims_project/app_controller.rb'
 
 controller = AimsProject::AppController.new

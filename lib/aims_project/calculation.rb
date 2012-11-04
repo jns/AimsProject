@@ -340,12 +340,15 @@ module AimsProject
     # If multiple output files are found, use the last one in the list
     # when sorted alpha-numerically.  (This is assumed to be the most recent calculation)
     def output(output_pattern = "*output*")
-      output_files = Dir.glob(File.join(calculation_directory, output_pattern))
-      if output_files.empty?
-        nil
-      else
-        Aims::OutputParser.parse(output_files.last)
+      unless @output
+        output_files = Dir.glob(File.join(calculation_directory, output_pattern))
+        if output_files.empty?
+          @output = nil
+        else
+          @outputAims::OutputParser.parse(output_files.last)
+        end
       end
+      @output
     end
 
     # Parse the calculation output and return the final geometry

@@ -212,14 +212,18 @@ def calc_statuses
     end
   end
   def duration_fmt(t)
-    "%0.2f hrs" % (t.to_f.abs*24.0)
+    if t < 2
+      "%0.2f hrs" % (t.to_f.abs*24.0)
+    else
+      "%i days ago" % t.round
+    end
   end
   project_obj_files = Dir["*.yaml"]
   project = AimsProject::Project.load(project_obj_files.first)
   format = "%-40s\t%-30s\t%-15s\t%-15s\t%-15s\t%-15s"
-  puts format % ["GEOMETRY", "CONTROL", "STATUS", "CREATED_AT", "UPDATED_AT", "DURATION"]
+  puts format % ["GEOMETRY", "CONTROL", "STATUS", "CREATED_AT", "UPDATED_AT", "SINCE_UPDATE"]
   project.calculations.sort{|a, b| a.updated_at <=> b.updated_at}.each{|c|
-    puts format % [c.geometry[0..40], c.control[0..30], c.status, date_str_fmt(c.created_at), date_str_fmt(c.updated_at), duration_fmt(c.updated_at - c.created_at)]
+    puts format % [c.geometry[0..40], c.control[0..30], c.status, date_str_fmt(c.created_at), date_str_fmt(c.updated_at), duration_fmt(DateTime.now - c.updated_at)]
   }
 end
 
