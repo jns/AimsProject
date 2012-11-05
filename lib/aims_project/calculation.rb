@@ -345,7 +345,7 @@ module AimsProject
         if output_files.empty?
           @output = nil
         else
-          @outputAims::OutputParser.parse(output_files.last)
+          @output = Aims::OutputParser.parse(output_files.last)
         end
       end
       @output

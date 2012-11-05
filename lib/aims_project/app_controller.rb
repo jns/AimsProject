@@ -22,6 +22,7 @@ class AppController < Wx::App
     @inspector = nil
     @statusbar = nil
     @projectTree = nil
+    @calcTree = nil
 
     # The original Unit Cell
     @original_uc = nil
@@ -38,7 +39,7 @@ class AppController < Wx::App
      
         self.app_name = "AimsViewer"
         # Create the frame, toolbar and menubar and define event handlers
-        size = [1200,800]
+        size = [1000,700]
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
         @statusbar = @frame.create_status_bar
 
@@ -49,8 +50,18 @@ class AppController < Wx::App
         hsplitter = SplitterWindow.new(@frame)
         splitter = SplitterWindow.new(hsplitter)
                 
-        @editor = GeometryEditor.new(self, splitter)
         @viewer = CrystalViewer.new(self, splitter)
+
+        panel = Panel.new(splitter)
+        @editor = GeometryEditor.new(self, panel)
+        @calcTree = CalculationTree.new(self, panel)
+        panelSizer = BoxSizer.new(VERTICAL)
+        panel.set_sizer(panelSizer)
+        panelSizer.add(@calcTree, 1, EXPAND)
+        panelSizer.add(@editor, 1, EXPAND)
+        @calcTree.hide
+        panel.layout
+        
         @tree = ProjectTree.new(self, hsplitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
@@ -59,7 +70,7 @@ class AppController < Wx::App
                 
         # Add to split view
         hsplitter.split_vertically(@tree, splitter, 150)
-        splitter.split_horizontally(@viewer, @editor, 450)
+        splitter.split_horizontally(@viewer, panel, 550)
         
         # Check off the current tool
         set_tool
@@ -223,13 +234,26 @@ class AppController < Wx::App
        @frame.set_title(calc.name)
        @original_uc = calc.final_geometry
        @viewer.unit_cell = @original_uc
-       @editor.unit_cell = @original_uc
+       @calcTree.show_calculation(calc)
+       @editor.hide
+       @calcTree.show
+       @calcTree.parent.layout
+#       @editor.unit_cell = @original_uc
        @inspector.update(@viewer)
        @viewer.draw_scene
        
-     rescue e
+     rescue $! => e
        error_dialog(e)
      end
+   end
+   
+   # Display the given geometry
+   def show_geometry(geometry)
+     @original_uc = geometry
+     @viewer.unit_cell = @original_uc
+     @editor.unit_cell = @original_uc
+     @inspector.update(@viewer)
+     @viewer.draw_scene
    end
    
    # Display a file dialog and attempt to open and display the file
@@ -245,19 +269,19 @@ class AppController < Wx::App
          end
        end
        puts "Opening #{file}"
+
+       @frame.set_title(file)
+       @editor.show
+       @calcTree.hide
        
        if (project)
          erb = ERB.new(File.read(file))
-         @original_uc = Aims::GeometryParser.parse_string(erb.result(project.get_binding))
+         show_geometry Aims::GeometryParser.parse_string(erb.result(project.get_binding))
        else
-         @original_uc = Aims::GeometryParser.parse(file)
+         show_geometry Aims::GeometryParser.parse(file)
        end
        
-       @frame.set_title(file)
-       @viewer.unit_cell = @original_uc
-       @editor.unit_cell = @original_uc
-       @inspector.update(@viewer)
-       @viewer.draw_scene
+       
      rescue Exception => dang
        error_dialog(dang)
      end

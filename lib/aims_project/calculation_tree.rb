@@ -3,17 +3,14 @@ module AimsProject
 class CalculationTree < Wx::ScrolledWindow
   
   include Wx
-  
-  CALCULATIONS = "Calculations"
-  
-  
+    
   attr_accessor :app, :treeControl
   
   def initialize(app, window)
     super(window)
     self.app = app
     
-    init_calculation_tree
+    init_tree
     
     sizer = BoxSizer.new(VERTICAL)
     sizer.add(self.treeControl, 1, EXPAND | ALL, 5)
@@ -22,25 +19,39 @@ class CalculationTree < Wx::ScrolledWindow
     set_sizer(sizer)
   end
   
-  def init_calculation_tree
+  def init_tree
     @treeControl = Wx::TreeCtrl.new(self)
+    root = self.treeControl.add_root("-")
+  end
+  
+  def show_calculation(calc)
     @tree_map = {}
-    if self.app.project
-
-      root = self.treeControl.add_root(CALCULATIONS)
-
-      self.app.project.calculations.each{|calc|
-        calcid = self.treeControl.append_item(root, calc.name)
-        @tree_map[calcid] = calc
-      }
-      
-      evt_tree_sel_changed(self.treeControl) {|evt|
-        calcid = evt.get_item        
-        # self.app.open_file(self.treeControl.get_item_text(itemid))
-      }
-    else
-      @tree_map[ROOT] = self.treeControl.add_root(ROOT)
-    end
+    
+    @treeControl.delete_all_items
+    root = self.treeControl.add_root(calc.name)
+    @treeControl.append_item(root, calc.geometry)
+    @treeControl.append_item(root, calc.control)
+    @treeControl.append_item(root, calc.status)
+    # @treeControl.append_item(root, calc.output.total_wall_time)
+    calc.output.geometry_steps.each{|step| 
+      step_id = @treeControl.append_item(root, "Step %i" % step.step_num)
+      @tree_map[step_id] = step
+      @treeControl.append_item(step_id, "Total Energy: %f" % step.total_energy)
+      @treeControl.append_item(step_id, "SC Iters: %i" % step.sc_iterations.size)
+      @treeControl.append_item(step_id, "Wall Time: %f" % step.total_wall_time.to_s)
+    }
+    @treeControl.expand(root)
+    # self.app.project.calculations.each{|calc|
+    #   calcid = self.treeControl.append_item(root, calc.name)
+    #   @tree_map[calcid] = calc
+    # }
+    
+    evt_tree_sel_changed(self.treeControl) {|evt|
+       step = @tree_map[evt.get_item]
+       if step        
+         self.app.show_geometry(step.geometry)
+       end
+    }
   end
   
 end
