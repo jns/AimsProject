@@ -17,8 +17,8 @@ class AppController < Wx::App
     @frame = nil
     @menubar = nil
     @toolbar = nil
-    @viewer = nil
-    @editor = nil
+    @geomViewer = nil
+    @geomEditor = nil
     @inspector = nil
     @statusbar = nil
     @projectTree = nil
@@ -46,31 +46,93 @@ class AppController < Wx::App
         # Initialize the selection
         @selection = {}
         
-        # Create the split view        
-        hsplitter = SplitterWindow.new(@frame)
-        splitter = SplitterWindow.new(hsplitter)
-                
-        @viewer = CrystalViewer.new(self, splitter)
-
-        panel = Panel.new(splitter)
-        @editor = GeometryEditor.new(self, panel)
-        @calcTree = CalculationTree.new(self, panel)
-        panelSizer = BoxSizer.new(VERTICAL)
-        panel.set_sizer(panelSizer)
-        panelSizer.add(@calcTree, 1, EXPAND)
-        panelSizer.add(@editor, 1, EXPAND)
-        @calcTree.hide
-        panel.layout
+        # Create the notebook
+        @notebook = Notebook.new(@frame)
         
-        @tree = ProjectTree.new(self, hsplitter)
+        # Create the geometry window
+        # The base window is a horizontal splitter
+        # Left side is a list control
+        geomWindow = SplitterWindow.new(@notebook)
+        @geomList = ListCtrl.new(geomWindow)
+        project.geometries.each{|geom|
+          li = ListItem.new
+          li.set_text(geom)
+          li.set_data(geom)
+          @geomList.insert_item(li)
+        }
+        evt_list_item_selected(@geomList) {|evt|
+          open_file(evt.get_item.get_data)
+        }
+
+        # Right side is a vertical splitter
+        geomWindowSplitter = SplitterWindow.new(geomWindow)
+        @geomEditor = GeometryEditor.new(self, geomWindowSplitter)
+        @geomViewer = CrystalViewer.new(self, geomWindowSplitter)
+        
+        geomWindowSplitter.split_vertically(@geomEditor, @geomViewer)
+        
+        # Add Left and right sides together
+        geomWindow.split_horizontally(@geomList, geomWindowSplitter, 100)
+        
+        # Create the control window
+        # The base window is a horizontal splitter
+        # Left side is a list of control files
+        # right side is a Rich Text Control
+        controlWindow = SplitterWindow.new(@notebook)
+        @controlList = ListCtrl.new(controlWindow);
+        @controlEditor = RichTextCtrl.new(controlWindow)
+        controlWindow.split_horizontally(@controlList, @controlEditor)
+        
+        # Create the calculations window
+        # Similar to the geometryWindow
+        # Left side is a list control
+        # Right side is a crystal viewer
+        calcWindow = SplitterWindow.new(@notebook)
+        calcWindowSplitter = SplitterWindow.new(calcWindow)
+        @calcList = ListCtrl.new(calcWindow)
+        
+        @calcTree = CalculationTree.new(self, calcWindowSplitter)
+        @calcViewer = CrystalViewer.new(self, calcWindowSplitter)
+        calcWindowSplitter.split_vertically(@calcTree, @calcViewer)
+        calcWindow.split_horizontally(@calcList, calcWindowSplitter, 100)
+        # Populate the calculations list
+        project.calculations.each{|calc|
+          li = ListItem.new
+          li.set_text(calc.name)
+          li.set_data(calc)
+          @calcList.insert_item(li)
+        }
+        evt_list_item_selected(@calcList) {|evt|
+          show_calculation(evt.get_item.get_data)
+        }
+        
+        # Add windows to the notebook
+        @notebook.add_page(geomWindow, 'Geometry')
+        @notebook.add_page(controlWindow, "Control")
+        @notebook.add_page(calcWindow, "Calculations")
+        
+        # Create the split view        
+        # hsplitter = SplitterWindow.new(@frame)
+        # splitter = SplitterWindow.new(hsplitter)
+                
+        
+        # panel = Panel.new(splitter)
+        # panelSizer = BoxSizer.new(VERTICAL)
+        # panel.set_sizer(panelSizer)
+        # panelSizer.add(@calcTree, 1, EXPAND)
+        # panelSizer.add(@geomEditor, 1, EXPAND)
+        # @calcTree.hide
+        # panel.layout
+        
+        # @tree = ProjectTree.new(self, hsplitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
         @toolbar = @frame.create_tool_bar
         populate_toolbar(@toolbar) if @toolbar
                 
         # Add to split view
-        hsplitter.split_vertically(@tree, splitter, 150)
-        splitter.split_horizontally(@viewer, panel, 550)
+        # hsplitter.split_vertically(@tree, splitter, 150)
+        # splitter.split_horizontally(@geomViewer, panel, 550)
         
         # Check off the current tool
         set_tool
@@ -83,13 +145,13 @@ class AppController < Wx::App
    def process_menu_event(event)
      case event.id
      when ID_ROTATE
-       @viewer.set_mouse_motion_function(:rotate)
+       @geomViewer.set_mouse_motion_function(:rotate)
      when ID_ZOOM
-       @viewer.set_mouse_motion_function(:zoom)
+       @geomViewer.set_mouse_motion_function(:zoom)
      when ID_PAN
-       @viewer.set_mouse_motion_function(:pan)  
+       @geomViewer.set_mouse_motion_function(:pan)  
      when ID_MOVE_CLIP_PLANE
-       @viewer.set_mouse_motion_function(:move_clip_plane)
+       @geomViewer.set_mouse_motion_function(:move_clip_plane)
      when ID_INSPECTOR
        show_inspector
      when ID_DELETE_ATOM
@@ -161,7 +223,7 @@ class AppController < Wx::App
    end
    
    def delete_atom
-     @viewer.delete_atom
+     @geomViewer.delete_atom
    end
    
    def nudge_selected_atoms(x,y,z)
@@ -173,7 +235,7 @@ class AppController < Wx::App
    
    def select_atom(atom)
      @selection[:atoms] = [atom]
-     @editor.select_atom(atom)
+     @geomEditor.select_atom(atom)
    end
    
    # Apply UI settings to viewer and re-render
@@ -181,34 +243,34 @@ class AppController < Wx::App
      
      if @original_uc and @inspector.update_unit_cell
        if @inspector.correct
-         # @viewer.unit_cell = @original_uc.correct
+         # @geomViewer.unit_cell = @original_uc.correct
          new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat).correct
        else
-         # @viewer.unit_cell = @original_uc
+         # @geomViewer.unit_cell = @original_uc
          new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat)
        end
-       @viewer.unit_cell = new_geom
-       @editor.unit_cell = new_geom
+       @geomViewer.unit_cell = new_geom
+       @geomEditor.unit_cell = new_geom
        @inspector.update_unit_cell = false
      end
      
-     # @viewer.repeat = [@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat]
-     @viewer.show_bonds = @inspector.show_bonds
-     @viewer.bond_length = @inspector.bond_length
-     @viewer.lighting = @inspector.show_lighting
-     @viewer.show_supercell = @inspector.show_cell
-     @viewer.show_xclip = @inspector.show_xclip
-     @viewer.show_yclip = @inspector.show_yclip
-     @viewer.show_zclip = @inspector.show_zclip
-     @viewer.background.alpha = ((@inspector.transparent_bg) ? 0 : 1)
-     @viewer.draw_scene
+     # @geomViewer.repeat = [@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat]
+     @geomViewer.show_bonds = @inspector.show_bonds
+     @geomViewer.bond_length = @inspector.bond_length
+     @geomViewer.lighting = @inspector.show_lighting
+     @geomViewer.show_supercell = @inspector.show_cell
+     @geomViewer.show_xclip = @inspector.show_xclip
+     @geomViewer.show_yclip = @inspector.show_yclip
+     @geomViewer.show_zclip = @inspector.show_zclip
+     @geomViewer.background.alpha = ((@inspector.transparent_bg) ? 0 : 1)
+     @geomViewer.draw_scene
    end
 
    def update
      begin
-       uc = Aims::GeometryParser.parse_string(@editor.get_contents)
+       uc = Aims::GeometryParser.parse_string(@geomEditor.get_contents)
        @original_uc = uc
-       @viewer.unit_cell = @original_uc
+       @geomViewer.unit_cell = @original_uc
        
        update_viewer
        @statusbar.status_text = "Ok!"
@@ -231,16 +293,14 @@ class AppController < Wx::App
    def show_calculation(calc)
      begin
 
-       @frame.set_title(calc.name)
        @original_uc = calc.final_geometry
-       @viewer.unit_cell = @original_uc
+       @calcViewer.unit_cell = @original_uc
        @calcTree.show_calculation(calc)
-       @editor.hide
        @calcTree.show
        @calcTree.parent.layout
-#       @editor.unit_cell = @original_uc
-       @inspector.update(@viewer)
-       @viewer.draw_scene
+#       @geomEditor.unit_cell = @original_uc
+       @inspector.update(@geomViewer)
+       @calcViewer.draw_scene
        
      rescue $! => e
        error_dialog(e)
@@ -250,10 +310,10 @@ class AppController < Wx::App
    # Display the given geometry
    def show_geometry(geometry)
      @original_uc = geometry
-     @viewer.unit_cell = @original_uc
-     @editor.unit_cell = @original_uc
-     @inspector.update(@viewer)
-     @viewer.draw_scene
+     @geomViewer.unit_cell = @original_uc
+     @geomEditor.unit_cell = @original_uc
+     @inspector.update(@geomViewer)
+     @geomViewer.draw_scene
    end
    
    # Display a file dialog and attempt to open and display the file
@@ -271,7 +331,7 @@ class AppController < Wx::App
        puts "Opening #{file}"
 
        @frame.set_title(file)
-       @editor.show
+       @geomEditor.show
        @calcTree.hide
        
        if (project)
@@ -294,7 +354,7 @@ class AppController < Wx::App
      if Wx::ID_OK == fd.show_modal
        begin
          File.open(fd.get_path, "w") do |f|
-           f.puts @viewer.current_unit_cell.format_geometry_in
+           f.puts @geomViewer.current_unit_cell.format_geometry_in
          end
          @working_dir = fd.get_directory
        rescue Exception => e
@@ -310,7 +370,7 @@ class AppController < Wx::App
    
    # Check/Uncheck the appropriate tools in the menu and toolbar
    def set_tool
-      current_tool = id_for_tool(@viewer.mouse_motion_func)
+      current_tool = id_for_tool(@geomViewer.mouse_motion_func)
       [ID_ROTATE, ID_ZOOM, ID_PAN].each{|id|
         @menubar.check(id, current_tool == id)
       }
@@ -337,9 +397,9 @@ class AppController < Wx::App
        if Wx::ID_OK == fd.show_modal
          @working_dir = fd.get_directory
 
-       		image = Image.new(@viewer.width, @viewer.height)
-          image.set_rgb_data(@viewer.rgb_image_data)
-          image.set_alpha_data(@viewer.alpha_image_data)
+       		image = Image.new(@geomViewer.width, @geomViewer.height)
+          image.set_rgb_data(@geomViewer.rgb_image_data)
+          image.set_alpha_data(@geomViewer.alpha_image_data)
           puts "Writing #{fd.get_path}"
           image.mirror(false).save_file(fd.get_path)
         end

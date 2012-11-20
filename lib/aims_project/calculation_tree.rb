@@ -32,6 +32,7 @@ class CalculationTree < Wx::ScrolledWindow
     @treeControl.append_item(root, calc.geometry)
     @treeControl.append_item(root, calc.control)
     @treeControl.append_item(root, calc.status)
+    @treeControl.append_item(root, "CONVERGED: #{calc.converged?}")
     # @treeControl.append_item(root, calc.output.total_wall_time)
     calc.output.geometry_steps.each{|step| 
       step_id = @treeControl.append_item(root, "Step %i" % step.step_num)

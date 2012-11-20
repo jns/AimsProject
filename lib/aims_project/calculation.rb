@@ -374,5 +374,10 @@ module AimsProject
       end
     end
     
+    # Return whether this calculation is converged or not
+    def converged?
+      output.geometry_converged
+    end
+    
   end
 end
