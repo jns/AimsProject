@@ -3,7 +3,7 @@ module AimsProject
 class GeometryEditor < Wx::ScrolledWindow
   
   include Wx
-  attr_accessor :app, :text_ctrl
+  attr_accessor :app, :text_ctrl, :button_panel
 
   @atom_ranges = {}
 
@@ -16,6 +16,19 @@ class GeometryEditor < Wx::ScrolledWindow
     sizer = BoxSizer.new(VERTICAL)
 
     @text_ctrl = RichTextCtrl.new(self)
+    
+    # Create the button panel (A toolbar for the top of this panel)
+    @button_panel = Panel.new(self)
+    button_panel_sizer = BoxSizer.new(HORIZONTAL)
+    @button_panel.set_sizer(button_panel_sizer)
+    
+    @toggle_button = Button.new(@button_panel, ID_ANY, "Code")
+    button_panel_sizer.add(@toggle_button)
+    evt_button(@toggle_button) {|evt|
+      
+    }
+    
+    sizer.add(self.button_panel)
     sizer.add(self.text_ctrl, 1, EXPAND | ALL, 5)
 
     set_auto_layout(true)

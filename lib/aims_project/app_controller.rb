@@ -33,6 +33,8 @@ class AppController < Wx::App
     # Used to synchronize directory in open/save dialogs
     attr_accessor :working_dir
     
+    # The root frame
+    attr_accessor :frame
     
    # Build the application
    def on_init
@@ -43,37 +45,21 @@ class AppController < Wx::App
         @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
         @statusbar = @frame.create_status_bar
 
+        # This timer will cause the main thread to pass every 2 ms so that other threads
+        # can get work done.
+        timer = Wx::Timer.new(self, Wx::ID_ANY)
+        evt_timer(timer.id) {Thread.pass}
+        timer.start(2)
+
         # Initialize the selection
         @selection = {}
         
         # Create the notebook
         @notebook = Notebook.new(@frame)
         
-        # Create the geometry window
-        # The base window is a horizontal splitter
-        # Left side is a list control
-        geomWindow = SplitterWindow.new(@notebook)
-        @geomList = ListCtrl.new(geomWindow)
-        project.geometries.each{|geom|
-          li = ListItem.new
-          li.set_text(geom)
-          li.set_data(geom)
-          @geomList.insert_item(li)
-        }
-        evt_list_item_selected(@geomList) {|evt|
-          open_file(evt.get_item.get_data)
-        }
+        # Create the geometry notebook page
+        geomWindow = GeometryWindow.new(self, @notebook)
 
-        # Right side is a vertical splitter
-        geomWindowSplitter = SplitterWindow.new(geomWindow)
-        @geomEditor = GeometryEditor.new(self, geomWindowSplitter)
-        @geomViewer = CrystalViewer.new(self, geomWindowSplitter)
-        
-        geomWindowSplitter.split_vertically(@geomEditor, @geomViewer)
-        
-        # Add Left and right sides together
-        geomWindow.split_horizontally(@geomList, geomWindowSplitter, 100)
-        
         # Create the control window
         # The base window is a horizontal splitter
         # Left side is a list of control files
@@ -87,24 +73,7 @@ class AppController < Wx::App
         # Similar to the geometryWindow
         # Left side is a list control
         # Right side is a crystal viewer
-        calcWindow = SplitterWindow.new(@notebook)
-        calcWindowSplitter = SplitterWindow.new(calcWindow)
-        @calcList = ListCtrl.new(calcWindow)
-        
-        @calcTree = CalculationTree.new(self, calcWindowSplitter)
-        @calcViewer = CrystalViewer.new(self, calcWindowSplitter)
-        calcWindowSplitter.split_vertically(@calcTree, @calcViewer)
-        calcWindow.split_horizontally(@calcList, calcWindowSplitter, 100)
-        # Populate the calculations list
-        project.calculations.each{|calc|
-          li = ListItem.new
-          li.set_text(calc.name)
-          li.set_data(calc)
-          @calcList.insert_item(li)
-        }
-        evt_list_item_selected(@calcList) {|evt|
-          show_calculation(evt.get_item.get_data)
-        }
+        calcWindow = CalculationWindow.new(self, @notebook)
         
         # Add windows to the notebook
         @notebook.add_page(geomWindow, 'Geometry')
@@ -135,7 +104,7 @@ class AppController < Wx::App
         # splitter.split_horizontally(@geomViewer, panel, 550)
         
         # Check off the current tool
-        set_tool
+        # set_tool
         
         # Display
         @frame.show        
@@ -222,6 +191,10 @@ class AppController < Wx::App
      @menubar
    end
    
+   def set_status(string)
+     @frame.set_status_text(string)
+   end
+   
    def delete_atom
      @geomViewer.delete_atom
    end
@@ -306,6 +279,7 @@ class AppController < Wx::App
        error_dialog(e)
      end
    end
+   
    
    # Display the given geometry
    def show_geometry(geometry)

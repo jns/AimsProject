@@ -334,6 +334,15 @@ module AimsProject
       File.join AimsProject::CALCULATION_DIR, self.name, (@calc_subdir || "")
     end
 
+    def load_output(output_pattern = "*output*")
+      output_files = Dir.glob(File.join(calculation_directory, output_pattern))
+      if output_files.empty?
+        @output = nil
+      else
+        @output = Aims::OutputParser.parse(output_files.last)
+      end      
+    end
+
     # Search the calculation directory for the calculation output.
     # If found, parse it and return the Aims::AimsOutput object, otherwise
     # return nil.
@@ -341,12 +350,7 @@ module AimsProject
     # when sorted alpha-numerically.  (This is assumed to be the most recent calculation)
     def output(output_pattern = "*output*")
       unless @output
-        output_files = Dir.glob(File.join(calculation_directory, output_pattern))
-        if output_files.empty?
-          @output = nil
-        else
-          @output = Aims::OutputParser.parse(output_files.last)
-        end
+        load_output(output_pattern)
       end
       @output
     end
