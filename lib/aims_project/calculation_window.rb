@@ -66,7 +66,6 @@ module AimsProject
            @app.set_status("")
          rescue $! => e
            @app.set_status(e.message)
-           # evtHandler.add_pending_event(ThreadCallbackEvent.new(Proc.new{puts e.message}))
          end
        }
        t.priority = t.priority + 100

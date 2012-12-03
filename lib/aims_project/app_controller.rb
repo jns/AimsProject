@@ -4,9 +4,6 @@ class AppController < Wx::App
   
     include Wx
   
-    ID_ROTATE = 100
-    ID_PAN = 101
-    ID_ZOOM = 102
     ID_SAVE_IMAGE = 103  
     ID_MOVE_CLIP_PLANE = 104
 
@@ -96,8 +93,8 @@ class AppController < Wx::App
         # @tree = ProjectTree.new(self, hsplitter)
         @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
-        @toolbar = @frame.create_tool_bar
-        populate_toolbar(@toolbar) if @toolbar
+        # @toolbar = @frame.create_tool_bar
+        # populate_toolbar(@toolbar) if @toolbar
                 
         # Add to split view
         # hsplitter.split_vertically(@tree, splitter, 150)
@@ -171,10 +168,10 @@ class AppController < Wx::App
        editMenu.append(ID_DELETE_ATOM, "Delete Atom\tCTRL+d")
        
        toolsMenu = Menu.new       
-       toolsMenu.append(ID_ROTATE, "rotate", "Rotate", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_ZOOM, "zoom", "Zoom", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_PAN, "pan", "Pan", Wx::ITEM_CHECK)
-       toolsMenu.append(ID_MOVE_CLIP_PLANE, "move cilp plane", "Move", Wx::ITEM_CHECK)
+       # toolsMenu.append(ID_ROTATE, "rotate", "Rotate", Wx::ITEM_CHECK)
+       # toolsMenu.append(ID_ZOOM, "zoom", "Zoom", Wx::ITEM_CHECK)
+       # toolsMenu.append(ID_PAN, "pan", "Pan", Wx::ITEM_CHECK)
+       # toolsMenu.append(ID_MOVE_CLIP_PLANE, "move cilp plane", "Move", Wx::ITEM_CHECK)
        
        viewMenu = Menu.new
        viewMenu.append(ID_INSPECTOR, "inspector\tCTRL+i")
@@ -199,17 +196,7 @@ class AppController < Wx::App
      @geomViewer.delete_atom
    end
    
-   def nudge_selected_atoms(x,y,z)
-     if @selection[:atoms]
-       @selection[:atoms].each{|a| a.displace!(x,y,z)}
-     end
-     update_viewer
-   end
-   
-   def select_atom(atom)
-     @selection[:atoms] = [atom]
-     @geomEditor.select_atom(atom)
-   end
+
    
    # Apply UI settings to viewer and re-render
    def update_viewer

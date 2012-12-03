@@ -45,7 +45,7 @@ module AimsProject
       }
       
     end
-  
+    
     # Display a file dialog and attempt to open and display the file
     def open_geometry_file(file = nil)
       begin

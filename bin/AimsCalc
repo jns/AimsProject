@@ -13,6 +13,7 @@
 
 begin
   require 'aims_project'
+  require 'highline'
 rescue
   require 'rubygems'
   require 'aims_project'
@@ -218,12 +219,25 @@ def calc_statuses
       "%i days ago" % t.round
     end
   end
+  def status_fmt(s)
+    color = case s
+    when AimsProject::RUNNING
+      :green
+    when AimsProject::COMPLETE
+      :yellow
+    when AimsProject::CANCELED
+      :red
+    else
+      nil
+    end
+    HighLine.color(s,color)
+  end
   project_obj_files = Dir["*.yaml"]
   project = AimsProject::Project.load(project_obj_files.first)
   format = "%-40s\t%-30s\t%-15s\t%-15s\t%-15s\t%-15s"
   puts format % ["GEOMETRY", "CONTROL", "STATUS", "CREATED_AT", "UPDATED_AT", "SINCE_UPDATE"]
   project.calculations.sort{|a, b| a.updated_at <=> b.updated_at}.each{|c|
-    puts format % [c.geometry[0..40], c.control[0..30], c.status, date_str_fmt(c.created_at), date_str_fmt(c.updated_at), duration_fmt(DateTime.now - c.updated_at)]
+    puts format % [c.geometry[0..40], c.control[0..30], status_fmt(c.status), date_str_fmt(c.created_at), date_str_fmt(c.updated_at), duration_fmt(DateTime.now - c.updated_at)]
   }
 end
 

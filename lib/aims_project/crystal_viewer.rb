@@ -7,6 +7,10 @@ class CrystalViewer < Wx::Panel
   include Glu
   include Aims
   
+  ID_ROTATE = 100
+  ID_PAN = 101
+  ID_ZOOM = 102
+  
   # An array of Aims::UnitCell's to display
   attr_reader :unit_cell
 
@@ -46,14 +50,46 @@ class CrystalViewer < Wx::Panel
     super(parent)
     @controller = controller
 
+    # Toolbar for the GL Canvas
+    basedir = File.dirname(__FILE__)
+    rotate_icon = Image.new(File.join(basedir,"rotate.gif"), BITMAP_TYPE_GIF)
+    @rotate_tool = BitmapButton.new(self, :id => ID_ROTATE, :bitmap => rotate_icon.rescale(16,15).convert_to_bitmap,:name => "rotate")
+    
+    zoom_icon = Image.new(File.join(basedir,"zoom.gif"), BITMAP_TYPE_GIF)
+    @zoom_tool = BitmapButton.new(self, :id => ID_ZOOM, :bitmap => zoom_icon.rescale(16,15).convert_to_bitmap, :name => "zoom")
+    
+    pan_icon = Image.new(File.join(basedir,"pan.gif"), BITMAP_TYPE_GIF)
+    @pan_tool = BitmapButton.new(self, :id => ID_PAN, :bitmap => pan_icon.rescale(16,15).convert_to_bitmap, :name => "pan")
+
+    evt_button(@rotate_tool) {|evt|
+      set_mouse_motion_function(:rotate)
+    }
+
+    evt_button(@zoom_tool) {|evt|
+      set_mouse_motion_function(:zoom)
+    }
+
+    evt_button(@pan_tool) {|evt|
+      set_mouse_motion_function(:pan)
+    }
+
+    @buttonSizer = HBoxSizer.new
+    @buttonSizer.add_item(@rotate_tool)
+    @buttonSizer.add_item(@zoom_tool)
+    @buttonSizer.add_item(@pan_tool)
+
+
     #@glPanel = CalendarCtrl.new(self)
     attrib = [Wx::GL_RGBA, Wx::GL_DOUBLEBUFFER, Wx::GL_DEPTH_SIZE, 24]
     @glPanel = GLCanvas.new(self, -1, [-1, -1], [-1, -1],
                                Wx::FULL_REPAINT_ON_RESIZE, "GLCanvas", attrib)
+    
     vbox_sizer = VBoxSizer.new
+    vbox_sizer.add_item(@buttonSizer, :flag => EXPAND)
     vbox_sizer.add_item(@glPanel, :proportion => 1, :flag => EXPAND)
     set_sizer(vbox_sizer)
     
+
     set_defaults
     
     # Define the method to call for paint requests
@@ -99,6 +135,7 @@ class CrystalViewer < Wx::Panel
     }
     
   end
+
 
   def set_defaults
     self.current_cell = 0
