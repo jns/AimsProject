@@ -51,8 +51,23 @@ module AimsProject
         @calcTree.show_calculation(@calculation)
         show_geometry(@calculation.final_geometry)
       }
+      
+      make_inspector_window
     end
 
+    def make_inspector_window
+      @inspector_window = @app.inspector.add_inspector_window
+      text = StaticText.new(@inspector_window, :label => "Goodbye World!")
+      @inspector_window.sizer = VBoxSizer.new
+      @inspector_window.sizer.add_item(text)
+      @inspector_window.sizer.add_item(StaticText.new(@inspector_window, :label => "Hot Dawg!"))
+      @inspector_window
+    end
+
+    def show_inspector
+      @app.inspector.show_inspector_window(@inspector_window)
+    end
+    
     def show_calculation(calc)
      begin
        @calculation = calc

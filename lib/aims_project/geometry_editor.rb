@@ -20,8 +20,8 @@ class GeometryEditor < Wx::ScrolledWindow
     # Create the button panel (A toolbar for the top of this panel)
     @button_panel = HBoxSizer.new
     
-    @toggle_button = Button.new(@button_panel, ID_ANY, "Code")
-    button_panel_sizer.add_item(@toggle_button)
+    @toggle_button = Button.new(self, ID_ANY, "Code")
+    @button_panel.add_item(@toggle_button)
     evt_button(@toggle_button) {|evt|
       
     }

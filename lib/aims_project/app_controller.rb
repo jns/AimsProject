@@ -51,6 +51,9 @@ class AppController < Wx::App
         # Initialize the selection
         @selection = {}
         
+        # Initialize the inspector
+        @inspector = Inspector.new(self, @frame)
+        
         # Create the notebook
         @notebook = Notebook.new(@frame)
         
@@ -77,29 +80,22 @@ class AppController < Wx::App
         @notebook.add_page(controlWindow, "Control")
         @notebook.add_page(calcWindow, "Calculations")
         
-        # Create the split view        
-        # hsplitter = SplitterWindow.new(@frame)
-        # splitter = SplitterWindow.new(hsplitter)
-                
+        evt_notebook_page_changed(@notebook) {|evt|
+          cp = @notebook.get_current_page
+          if cp.respond_to? :show_inspector
+            @notebook.get_current_page.show_inspector
+          end
+        }
         
-        # panel = Panel.new(splitter)
-        # panelSizer = BoxSizer.new(VERTICAL)
-        # panel.set_sizer(panelSizer)
-        # panelSizer.add(@calcTree, 1, EXPAND)
-        # panelSizer.add(@geomEditor, 1, EXPAND)
-        # @calcTree.hide
-        # panel.layout
+        # Set the selected notebook page
+        @notebook.set_selection(2)
         
         # @tree = ProjectTree.new(self, hsplitter)
-        @inspector = Inspector.new(self, @frame)
         @frame.set_menu_bar(menubar)
         # @toolbar = @frame.create_tool_bar
         # populate_toolbar(@toolbar) if @toolbar
                 
-        # Add to split view
-        # hsplitter.split_vertically(@tree, splitter, 150)
-        # splitter.split_horizontally(@geomViewer, panel, 550)
-        
+
         # Check off the current tool
         # set_tool
         
@@ -110,14 +106,6 @@ class AppController < Wx::App
    # Process a menu event
    def process_menu_event(event)
      case event.id
-     when ID_ROTATE
-       @geomViewer.set_mouse_motion_function(:rotate)
-     when ID_ZOOM
-       @geomViewer.set_mouse_motion_function(:zoom)
-     when ID_PAN
-       @geomViewer.set_mouse_motion_function(:pan)  
-     when ID_MOVE_CLIP_PLANE
-       @geomViewer.set_mouse_motion_function(:move_clip_plane)
      when ID_INSPECTOR
        show_inspector
      when ID_DELETE_ATOM
@@ -197,35 +185,6 @@ class AppController < Wx::App
    end
    
 
-   
-   # Apply UI settings to viewer and re-render
-   def update_viewer
-     
-     if @original_uc and @inspector.update_unit_cell
-       if @inspector.correct
-         # @geomViewer.unit_cell = @original_uc.correct
-         new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat).correct
-       else
-         # @geomViewer.unit_cell = @original_uc
-         new_geom = @original_uc.repeat(@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat)
-       end
-       @geomViewer.unit_cell = new_geom
-       @geomEditor.unit_cell = new_geom
-       @inspector.update_unit_cell = false
-     end
-     
-     # @geomViewer.repeat = [@inspector.x_repeat, @inspector.y_repeat, @inspector.z_repeat]
-     @geomViewer.show_bonds = @inspector.show_bonds
-     @geomViewer.bond_length = @inspector.bond_length
-     @geomViewer.lighting = @inspector.show_lighting
-     @geomViewer.show_supercell = @inspector.show_cell
-     @geomViewer.show_xclip = @inspector.show_xclip
-     @geomViewer.show_yclip = @inspector.show_yclip
-     @geomViewer.show_zclip = @inspector.show_zclip
-     @geomViewer.background.alpha = ((@inspector.transparent_bg) ? 0 : 1)
-     @geomViewer.draw_scene
-   end
-
    def update
      begin
        uc = Aims::GeometryParser.parse_string(@geomEditor.get_contents)
@@ -239,6 +198,13 @@ class AppController < Wx::App
      end
   end
    
+   # Get the inspector
+   def inspector
+     if @inspector.nil?
+       @inspector = Inspector.new(self, @frame)
+     end
+     @inspector
+   end
    
    # Show the inspector
    def show_inspector
@@ -331,24 +297,24 @@ class AppController < Wx::App
    
    # Check/Uncheck the appropriate tools in the menu and toolbar
    def set_tool
-      current_tool = id_for_tool(@geomViewer.mouse_motion_func)
-      [ID_ROTATE, ID_ZOOM, ID_PAN].each{|id|
-        @menubar.check(id, current_tool == id)
-      }
+      # current_tool = id_for_tool(@geomViewer.mouse_motion_func)
+      # [ID_ROTATE, ID_ZOOM, ID_PAN].each{|id|
+      #   @menubar.check(id, current_tool == id)
+      # }
    end
    
    # Convert between symbols (nice Ruby) and integers (bad C++)
    def id_for_tool(tool)
-      case(tool.to_sym)
-      when :rotate
-        ID_ROTATE
-      when :pan
-        ID_PAN
-      when :zoom
-        ID_ZOOM
-      else
-        nil
-      end
+      # case(tool.to_sym)
+      # when :rotate
+      #   ID_ROTATE
+      # when :pan
+      #   ID_PAN
+      # when :zoom
+      #   ID_ZOOM
+      # else
+      #   nil
+      # end
    end
 
    def save_image
