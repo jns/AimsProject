@@ -45,6 +45,10 @@ class GeometryEditor < Wx::ScrolledWindow
     self.text_ctrl.set_value(uc.format_geometry_in)
   end
   
+  def update
+    self.text_ctrl.set_value(@unit_cell.format_geometry_in)    
+  end
+  
   def select_atom(atom)
     selectionStyle = Wx::RichTextAttr.new(Wx::BLACK, Wx::Colour.new("YELLOW"))
     

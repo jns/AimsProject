@@ -184,19 +184,6 @@ class AppController < Wx::App
      @geomViewer.delete_atom
    end
    
-
-   def update
-     begin
-       uc = Aims::GeometryParser.parse_string(@geomEditor.get_contents)
-       @original_uc = uc
-       @geomViewer.unit_cell = @original_uc
-       
-       update_viewer
-       @statusbar.status_text = "Ok!"
-     rescue Exception => e 
-       @statusbar.status_text = e.message
-     end
-  end
    
    # Get the inspector
    def inspector

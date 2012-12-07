@@ -21,9 +21,6 @@ class CrystalViewer < Wx::Panel
   # If displaying multiple, then the current cell
   attr_accessor :current_cell
 
-  # Atomic centers closer than this number have bonds drawn. 
-  attr_reader :bond_length
-
   # The keyboard actions
   attr_accessor :mouse_motion_func # a string "rotate", "pan" or "zoom"
 
@@ -33,8 +30,6 @@ class CrystalViewer < Wx::Panel
   attr_accessor :ortho_side, :ortho_zmin, :ortho_zmax
   attr_accessor :x_down, :y_down, :alt, :az, :offx, :offy, :offz
   attr_accessor :orthographic, :width, :height, :picking, :atom, :x_last, :y_last
-  attr_accessor :show_bonds, :lighting, :show_supercell, :show_clip_planes
-  attr_accessor :show_xclip, :show_yclip, :show_zclip
   attr_accessor :render_mode
   
   attr_accessor :xmax_plane, :xmin_plane
@@ -45,10 +40,18 @@ class CrystalViewer < Wx::Panel
 
   attr_accessor :atoms_changed
 
-  def initialize(controller, parent)
+  def initialize(controller, parent, options = nil)
 
     super(parent)
     @controller = controller
+    
+    # Register self as an observer of the options
+    if options
+      @options = options
+    else
+      @options = CrystalViewerOptions.new(parent)
+    end 
+    @options.add_observer(self)
 
     # Toolbar for the GL Canvas
     basedir = File.dirname(__FILE__)
@@ -136,10 +139,13 @@ class CrystalViewer < Wx::Panel
     
   end
 
+  # Called when the options changes
+  def update
+    self.draw_scene
+  end
 
   def set_defaults
     self.current_cell = 0
-    self.bond_length = 3
     self.background = Material.new(0.7, 0.7, 1.0, 1)
     self.x_down = 0
     self.y_down = 0
@@ -159,17 +165,20 @@ class CrystalViewer < Wx::Panel
     self.picking =false      
     # The last clicked atom
     self.atom = nil
-    self.show_bonds = true
-    self.lighting = true
-    self.show_xclip = false
-    self.show_yclip = false
-    self.show_zclip = true
-    self.show_supercell = true
     self.atoms_changed = true
     self.hiRes
     self.mouse_motion_func = :rotate
     self.repeat = Vector[1,1,1]
     self.render_mode = :ball_stick
+    @options.set_properties(
+      :bond_length => 3,
+      :show_bonds => true,
+      :show_lighting => true,
+      :show_xclip => false,
+      :show_yclip => false,
+      :show_zclip => true,
+      :show_supercell => true
+    )
   end
 
 
@@ -215,7 +224,7 @@ class CrystalViewer < Wx::Panel
       uc.add_plane(@zmax_plane, false)
       uc.add_plane(@zmin_plane, false)
       uc.recache_visible_atoms
-      uc.make_bonds(@bond_length)
+      uc.make_bonds(@options.bond_length)
     }
 
 
@@ -240,8 +249,9 @@ class CrystalViewer < Wx::Panel
   end
 
   def bond_length=(l)
-    @bond_length = l
-    self.unit_cell.each{|uc| uc.make_bonds(l)} if self.unit_cell
+    @options.bond_length = l
+    # FIXME The bonds should be made in the controller
+    # self.unit_cell.each{|uc| uc.make_bonds(l)} if self.unit_cell
   end
 
   def mouse_down(x,y)
@@ -365,8 +375,8 @@ class CrystalViewer < Wx::Panel
     draw_init
     apply_projection
     position_camera
-    add_lights if self.lighting
-    outline_supercell if self.show_supercell
+    add_lights if @options.show_lighting
+    outline_supercell if @options.show_supercell
       
     if self.unit_cell
       atoms = self.unit_cell[self.current_cell]
@@ -376,7 +386,7 @@ class CrystalViewer < Wx::Panel
             
             origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
-            draw_bonds(origin) if self.show_bonds
+            draw_bonds(origin) if @options.show_bonds
             draw_lattice(origin)
           end
         end
@@ -417,7 +427,7 @@ class CrystalViewer < Wx::Panel
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST)
 
-    if self.lighting
+    if @options.show_lighting
       glEnable(GL_LIGHTING)
       glEnable(GL_LIGHT0)
     else
@@ -649,7 +659,7 @@ class CrystalViewer < Wx::Panel
 
     sphere_quadric = nil
     for a in atoms
-      a.material.apply(self.lighting)
+      a.material.apply(@options.show_lighting)
       case self.render_mode 
       when :ball_stick
         r = rmin+(a.z - zmin)*rscale
@@ -715,7 +725,7 @@ class CrystalViewer < Wx::Panel
     # draw z_planes
     # The are bounded by the min and max points in the x-y plane
 
-    if self.show_zclip
+    if @options.show_zclip
       z = -1*@zmax_plane.distance_to_point(0,0,0)
       draw_plane(@zmax_plane, [[bbx1, bby1, z],
                                [bbx2, bby1, z],
@@ -729,7 +739,7 @@ class CrystalViewer < Wx::Panel
                                 [bbx1, bby2, z]])
     end
 
-    if self.show_xclip
+    if @options.show_xclip
       x = -1*@xmax_plane.distance_to_point(0,0,0)
       draw_plane(@xmax_plane, [[x, bby1, bbz1],
                                [x, bby1, bbz2],
@@ -743,7 +753,7 @@ class CrystalViewer < Wx::Panel
                                 [x, bby2, bbz1]])
     end
 
-    if self.show_yclip
+    if @options.show_yclip
       y = -1*@ymax_plane.distance_to_point(0,0,0)
       draw_plane(@ymax_plane, [[bbx1, y, bbz1],
                                [bbx1, y, bbz2],

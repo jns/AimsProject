@@ -20,6 +20,7 @@ require 'aims_project/app_controller.rb'
 require 'aims_project/geometry_window.rb'
 require 'aims_project/calculation_window.rb'
 require 'aims_project/thread_callback_event.rb'
+require 'aims_project/crystal_viewer_options.rb'
 
 controller = AimsProject::AppController.new
 
