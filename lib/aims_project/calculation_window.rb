@@ -40,7 +40,7 @@ module AimsProject
       topSplitterWindow.split_horizontally(@calcList, calcWindowSplitter, 100)
 
       # Populate the calculations list
-      @app.project.calculations.each{|calc|
+      @app.project.calculations.sort{|a,b| a.name <=> b.name}.each{|calc|
         li = ListItem.new
         li.set_text(calc.name)
         li.set_data(calc)

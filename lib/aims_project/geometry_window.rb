@@ -32,7 +32,7 @@ module AimsProject
       
       # The top is a list control
       @geomList = ListCtrl.new(topSplitterWindow)
-      app.project.geometries.each{|geom|
+      app.project.geometries.sort{|a,b| a <=> b}.each{|geom|
         li = ListItem.new
         li.set_text(geom)
         li.set_data(geom)

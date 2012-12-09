@@ -13,6 +13,7 @@ class CrystalViewer < Wx::Panel
   
   # An array of Aims::UnitCell's to display
   attr_reader :unit_cell
+  attr_reader :unit_cell_corrected
 
   # How many times to repeat the unit cell
   # A three element vector
@@ -137,6 +138,10 @@ class CrystalViewer < Wx::Panel
         nudge(nudge_dir)
     }
     
+      # What to do when worker threads return
+      evt_thread_callback {|evt|
+        self.draw_scene
+      }
   end
 
   # Called when the options changes
@@ -190,20 +195,23 @@ class CrystalViewer < Wx::Panel
   Set the unit cell to display. 
 =end
   def unit_cell=(uc)
-    if uc.is_a? Array
-      @unit_cell = uc
-    else
-      @unit_cell = [uc]
-    end
+    @unit_cell = uc
+    @unit_cell_corrected = nil
 
+    Thread.new(self) { |evtHandler|
+      @unit_cell_corrected = @unit_cell.correct
+      evt = ThreadCallbackEvent.new
+      evtHandler.add_pending_event(evt)
+    }
+    
     # each bounding box is a 2 element array [max, min]
-    bounding_boxes = @unit_cell.collect{|uc| uc.bounding_box(false)}
-    xmax = bounding_boxes.max{|a,b| a[0].x <=> b[0].x}[0].x
-    xmin = bounding_boxes.min{|a,b| a[1].x <=> b[1].x}[1].x
-    ymax = bounding_boxes.max{|a,b| a[0].y <=> b[0].y}[0].y
-    ymin = bounding_boxes.min{|a,b| a[1].y <=> b[1].y}[1].y
-    zmax = bounding_boxes.max{|a,b| a[0].z <=> b[0].z}[0].z
-    zmin = bounding_boxes.min{|a,b| a[1].z <=> b[1].z}[1].z
+    bounding_box = @unit_cell.bounding_box(false)
+    xmax = bounding_box[0].x
+    xmin = bounding_box[1].x
+    ymax = bounding_box[0].y
+    ymin = bounding_box[1].y
+    zmax = bounding_box[0].z
+    zmin = bounding_box[1].z
 
     @xmax_plane = Plane.new( 1, 0, 0, xmax, 0, 0)
     @xmin_plane = Plane.new(-1, 0, 0, xmin, 0, 0)
@@ -215,17 +223,15 @@ class CrystalViewer < Wx::Panel
     @active_clip_plane = @zmin_plane
 
     # Add clip-planes to each unit cell
-    @unit_cell.each{|uc|
-      uc.clear_planes
-      uc.add_plane(@xmax_plane, false)
-      uc.add_plane(@xmin_plane, false)
-      uc.add_plane(@ymax_plane, false)
-      uc.add_plane(@ymin_plane, false)
-      uc.add_plane(@zmax_plane, false)
-      uc.add_plane(@zmin_plane, false)
-      uc.recache_visible_atoms
-      uc.make_bonds(@options.bond_length)
-    }
+      @unit_cell.clear_planes
+      @unit_cell.add_plane(@xmax_plane, false)
+      @unit_cell.add_plane(@xmin_plane, false)
+      @unit_cell.add_plane(@ymax_plane, false)
+      @unit_cell.add_plane(@ymin_plane, false)
+      @unit_cell.add_plane(@zmax_plane, false)
+      @unit_cell.add_plane(@zmin_plane, false)
+      @unit_cell.recache_visible_atoms
+      @unit_cell.make_bonds(@options.bond_length)
 
 
   end
@@ -263,7 +269,7 @@ class CrystalViewer < Wx::Panel
   end
 
   def mouse_up(x,y)
-    return unless self.unit_cell and self.unit_cell[self.current_cell]
+    return unless self.unit_cell
     self.atom = pick_object(x,y)
     if self.atom
       @controller.select_atom(self.atom)
@@ -302,9 +308,7 @@ class CrystalViewer < Wx::Panel
   def delete_atom
     if self.atom
       # Remove 
-      self.unit_cell.each{|uc| 
-        uc.remove_atom(self.atom)
-      }
+      self.unit_cell.remove_atom(self.atom)
     end
   end
   
@@ -379,7 +383,7 @@ class CrystalViewer < Wx::Panel
     outline_supercell if @options.show_supercell
       
     if self.unit_cell
-      atoms = self.unit_cell[self.current_cell]
+      atoms = self.unit_cell
       repeat[0].times do |i|
         repeat[1].times do |j|
           repeat[2].times do |k|
@@ -458,7 +462,7 @@ class CrystalViewer < Wx::Panel
 
     glInitNames
     if self.unit_cell
-      atoms = self.unit_cell[self.current_cell]
+      atoms = self.unit_cell
       repeat[0].times do |i|
         repeat[1].times do |j|
           repeat[2].times do |k|
@@ -489,14 +493,13 @@ class CrystalViewer < Wx::Panel
     end
 
 
-    self.unit_cell[self.current_cell].find{|a| a.id == names.last}
+    self.unit_cell.find{|a| a.id == names.last}
   end
 
   def position_camera
     return unless self.unit_cell
-    atoms = self.unit_cell[self.current_cell]
-    return unless atoms
-
+    atoms = self.unit_cell
+    
     # Find the center of all atoms, not just visible ones.
     center = atoms.center
 
@@ -521,8 +524,8 @@ class CrystalViewer < Wx::Panel
 
   def outline_supercell
     return unless self.unit_cell
-    uc = self.unit_cell[self.current_cell]
-    return unless uc
+    uc = self.unit_cell
+
     vecs = uc.lattice_vectors
     return unless vecs
 
@@ -587,8 +590,11 @@ class CrystalViewer < Wx::Panel
 
   def draw_bonds(origin = [0,0,0])
     return unless self.unit_cell
-    atoms = self.unit_cell[self.current_cell]
-    return unless atoms
+    atoms = if @options.correct
+      @unit_cell_corrected
+    else
+        @unit_cell
+    end
 
     black = Material.new(0,0,0)
     black.apply(false)
@@ -631,11 +637,15 @@ class CrystalViewer < Wx::Panel
   def draw_lattice(origin = [0,0,0])
 
     return unless self.unit_cell
-
-    atoms = self.unit_cell[self.current_cell]
-
+    
+    atoms = if @options.correct
+      @unit_cell_corrected
+    else
+      @unit_cell
+    end
+    
     return unless atoms
-
+    
     # Create sphere object
     rmin = 0.3
     rmax = 0.5
@@ -685,14 +695,6 @@ class CrystalViewer < Wx::Panel
     end
     gluDeleteQuadric(sphere_quadric) if sphere_quadric
 
-
-
-    # Draw bonds as black lines
-    # glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,[0,0,0,1])
-    # glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,[0,0,0,1])
-    # self.bonds.draw(GL_LINES)
-    # glRasterPos2f(-10, 10)
-    # glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, @@current_cell.to_s[0])
   end
 
   #
@@ -709,8 +711,7 @@ class CrystalViewer < Wx::Panel
 
   def draw_clip_planes
     return unless self.unit_cell
-    atoms = self.unit_cell[self.current_cell]
-    return unless atoms
+    atoms = self.unit_cell
 
     bb = atoms.bounding_box
     bbx1 = bb[0].x

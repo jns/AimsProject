@@ -380,7 +380,11 @@ module AimsProject
     
     # Return whether this calculation is converged or not
     def converged?
-      output.geometry_converged
+      if output.nil?
+        false
+      else
+        output.geometry_converged
+      end
     end
     
   end

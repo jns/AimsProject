@@ -29,18 +29,21 @@ class CalculationTree < Wx::ScrolledWindow
     
     @treeControl.delete_all_items
     root = self.treeControl.add_root(calc.name)
-    @treeControl.append_item(root, calc.geometry)
+    input_geom = @treeControl.append_item(root, calc.geometry)
+    @tree_map[input_geom] = calc.geometry
     @treeControl.append_item(root, calc.control)
     @treeControl.append_item(root, calc.status)
     @treeControl.append_item(root, "CONVERGED: #{calc.converged?}")
     # @treeControl.append_item(root, calc.output.total_wall_time)
-    calc.output.geometry_steps.each{|step| 
-      step_id = @treeControl.append_item(root, "Step %i" % step.step_num)
-      @tree_map[step_id] = step
-      @treeControl.append_item(step_id, "Total Energy: %f" % step.total_energy)
-      @treeControl.append_item(step_id, "SC Iters: %i" % step.sc_iterations.size)
-      @treeControl.append_item(step_id, "Wall Time: %f" % step.total_wall_time.to_s)
-    }
+    if calc.output
+      calc.output.geometry_steps.each{|step| 
+        step_id = @treeControl.append_item(root, "Step %i" % step.step_num)
+        @tree_map[step_id] = step
+        @treeControl.append_item(step_id, "Total Energy: %f" % step.total_energy)
+        @treeControl.append_item(step_id, "SC Iters: %i" % step.sc_iterations.size)
+        @treeControl.append_item(step_id, "Wall Time: %f" % step.total_wall_time.to_s)
+      }
+    end
     @treeControl.expand(root)
     # self.app.project.calculations.each{|calc|
     #   calcid = self.treeControl.append_item(root, calc.name)
