@@ -30,7 +30,7 @@ class CalculationTree < Wx::ScrolledWindow
     @treeControl.delete_all_items
     root = self.treeControl.add_root(calc.name)
     input_geom = @treeControl.append_item(root, calc.geometry)
-    @tree_map[input_geom] = calc.geometry
+    @tree_map[input_geom] = calc.input_geometry
     @treeControl.append_item(root, calc.control)
     @treeControl.append_item(root, calc.status)
     @treeControl.append_item(root, "CONVERGED: #{calc.converged?}")
@@ -51,9 +51,12 @@ class CalculationTree < Wx::ScrolledWindow
     # }
     
     evt_tree_sel_changed(self.treeControl) {|evt|
-       step = @tree_map[evt.get_item]
-       if step        
-         self.app.show_geometry(step.geometry)
+       item = @tree_map[evt.get_item]
+       if item.is_a? Aims::GeometryStep       
+         self.app.show_geometry(item.geometry)
+       end
+       if item.is_a? Aims::Geometry
+         self.app.show_geometry(item)
        end
     }
   end

@@ -11,6 +11,10 @@ class CrystalViewer < Wx::Panel
   ID_PAN = 101
   ID_ZOOM = 102
   
+  PICK_ID_ATOM  = 0x10000000
+  PICK_ID_PLANE = 0x20000000
+  PICK_ID_BOND  = 0x30000000
+  
   # An array of Aims::UnitCell's to display
   attr_reader :unit_cell
   attr_reader :unit_cell_corrected
@@ -40,6 +44,8 @@ class CrystalViewer < Wx::Panel
   attr_accessor :slices, :stacks
 
   attr_accessor :atoms_changed
+
+  attr_accessor :selection
 
   def initialize(controller, parent, options = nil)
 
@@ -270,7 +276,8 @@ class CrystalViewer < Wx::Panel
 
   def mouse_up(x,y)
     return unless self.unit_cell
-    self.atom = pick_object(x,y)
+    @picked = pick_object(x,y)
+    self.atom = self.unit_cell.atoms.find{|a| a.id == @picked[:atoms].last}
     if self.atom
       @controller.select_atom(self.atom)
       # puts self.atom.format_geometry_in
@@ -470,6 +477,7 @@ class CrystalViewer < Wx::Panel
             origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
             self.draw_lattice(origin)
+            self.draw_clip_planes
           end
         end
       end
@@ -481,7 +489,7 @@ class CrystalViewer < Wx::Panel
     glFlush();
 
     count = glRenderMode(GL_RENDER)
-    data = buf.unpack("I*")
+    data = buf.unpack("L!*")
     names = []
     count.times do 
       num_names = data.shift
@@ -492,8 +500,17 @@ class CrystalViewer < Wx::Panel
       end
     end
 
+    picked_objects = {:atoms => [], :planes => []}
+    names.each{|n|
+      if (n & PICK_ID_ATOM) == PICK_ID_ATOM
+        picked_objects[:atoms] << (n ^ PICK_ID_ATOM)
+      end
+      if (n & PICK_ID_PLANE) == PICK_ID_PLANE
+        picked_objects[:planes] << (n ^ PICK_ID_PLANE)
+      end
+    }
 
-    self.unit_cell.find{|a| a.id == names.last}
+    picked_objects
   end
 
   def position_camera
@@ -546,6 +563,8 @@ class CrystalViewer < Wx::Panel
     # Corner #4
     c4 = v1 + v2 + v3
 
+    Material.black.apply
+    glLineWidth(1.0)
 
     glBegin(GL_LINES)
 
@@ -596,8 +615,8 @@ class CrystalViewer < Wx::Panel
         @unit_cell
     end
 
-    black = Material.new(0,0,0)
-    black.apply(false)
+    Material.black.apply
+    glLineWidth(1.0)
     glBegin(GL_LINES)
     atoms.bonds.each{|b|
       glVertex3f(origin[0] + b[0].x, origin[1] + b[0].y, origin[2] + b[0].z)
@@ -625,7 +644,7 @@ class CrystalViewer < Wx::Panel
 
     # Load a new matrix onto the stack
     glPushMatrix()
-    glPushName(name) if self.picking
+    glPushName(name | PICK_ID_ATOM) if self.picking
     glTranslatef(x, y, z)
     gluSphere(sphere_quadric, r, slices, stacks)            
     glPopName() if picking
@@ -697,16 +716,59 @@ class CrystalViewer < Wx::Panel
 
   end
 
+  # a test method to see of an object of a particular type was picked.
+  # valid types are :atom, :plane 
+  def is_picked?(type, id)
+    if @picked
+    case type
+      when :atom
+        @picked[:atoms].member? id
+      when :plane
+        @picked[:planes].member? id
+      else
+        false
+      end
+    else
+      false
+    end
+  end
+
   #
   # Draw a plane
   # use the vertices defined in lineLoop as the boundary of the plane
-  def draw_plane(plane, lineLoop)
+  def draw_plane(plane, lineLoop, pickid)
+
+    glPushName(pickid | PICK_ID_PLANE) if self.picking
+    
+    # if is_picked?(:plane, pickid)
+    #   Material.black.apply
+    #   glLineWidth(3.0)
+    #   glEdgeFlag(GL_TRUE)
+    # end
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+    Material.new(0.9, 0.9, 0.0, 0.5).apply
     glBegin(GL_TRIANGLE_FAN)
     glNormal3f(plane.a, plane.b, plane.c)
     lineLoop.each{|p| 
         glVertex3f(p[0], p[1], p[2])
     }
     glEnd()
+    
+    glEdgeFlag(GL_FALSE)
+    glPopName() if picking
+    
+    if (is_picked?(:plane, pickid))
+      Material.black.apply
+      glLineWidth(3.0)
+      glBegin(GL_LINE_LOOP)
+      lineLoop.each{|p|
+        glVertex3f(p[0], p[1], p[2])
+      }
+      glEnd()
+      glLineWidth(1.0)
+    end
+    
   end
 
   def draw_clip_planes
@@ -721,8 +783,6 @@ class CrystalViewer < Wx::Panel
     bbz1 = bb[0].z
     bbz2 = bb[1].z
 
-    Material.new(0.9, 0.9, 0.0, 0.5).apply
-
     # draw z_planes
     # The are bounded by the min and max points in the x-y plane
 
@@ -731,13 +791,13 @@ class CrystalViewer < Wx::Panel
       draw_plane(@zmax_plane, [[bbx1, bby1, z],
                                [bbx2, bby1, z],
                                [bbx2, bby2, z], 
-                               [bbx1, bby2, z]])
+                               [bbx1, bby2, z]],1)
 
        z = @zmin_plane.distance_to_point(0,0,0)
        draw_plane(@zmin_plane, [[bbx1, bby1, z],
                                 [bbx2, bby1, z],
                                 [bbx2, bby2, z], 
-                                [bbx1, bby2, z]])
+                                [bbx1, bby2, z]],2)
     end
 
     if @options.show_xclip
@@ -745,13 +805,13 @@ class CrystalViewer < Wx::Panel
       draw_plane(@xmax_plane, [[x, bby1, bbz1],
                                [x, bby1, bbz2],
                                [x, bby2, bbz2], 
-                               [x, bby2, bbz1]])
+                               [x, bby2, bbz1]],3)
 
        x = @xmin_plane.distance_to_point(0,0,0)
        draw_plane(@xmin_plane, [[x, bby1, bbz1],
                                 [x, bby1, bbz2],
                                 [x, bby2, bbz2], 
-                                [x, bby2, bbz1]])
+                                [x, bby2, bbz1]],4)
     end
 
     if @options.show_yclip
@@ -759,13 +819,13 @@ class CrystalViewer < Wx::Panel
       draw_plane(@ymax_plane, [[bbx1, y, bbz1],
                                [bbx1, y, bbz2],
                                [bbx2, y, bbz2], 
-                               [bbx2, y, bbz1]])
+                               [bbx2, y, bbz1]],5)
 
        y = @ymin_plane.distance_to_point(0,0,0)
        draw_plane(@ymin_plane, [[bbx1, y, bbz1],
                                 [bbx1, y, bbz2],
                                 [bbx2, y, bbz2], 
-                                [bbx2, y, bbz1]])
+                                [bbx2, y, bbz1]],6)
     end
 
   end

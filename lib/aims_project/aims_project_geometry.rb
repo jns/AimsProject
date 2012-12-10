@@ -13,10 +13,10 @@ module AimsProject
     
     def initialize(file)
       @filename = file
-      @geometry_original = GeometryParser.parse(@filename)
+      @geometry_original = Aims::GeometryParser.parse(@filename)
     end
     
-    def atoms
+    def geometry
       if self.correct_geometry
         geometry_corrected
       else
@@ -35,10 +35,16 @@ module AimsProject
       @geometry_original
     end
     
+    def to_s
+      @filename
+    end
+    
+    
     def save
       unless @filename
         raise InvalidFilenameException
       end
+      raise "AimsProjectGeometry.save is not yet implemented"
     end
     
   end

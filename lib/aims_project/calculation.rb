@@ -201,6 +201,15 @@ module AimsProject
       "#{geometry}.#{control}"
     end
     
+    # Intended to replace @geometry, but needs lots of regression testing
+    # for now, will just generate this on the fly
+    def input_geometry
+      unless @actual_geometry
+        @input_geometry = Aims::GeometryParser.parse(File.join(self.calculation_directory, "geometry.in"))
+      end
+      @input_geometry
+    end
+    
     # Set the status to HOLD.
     # Only possible if status is currently STAGED
     def hold
@@ -281,6 +290,7 @@ module AimsProject
     def reload
       c = Calculation.load(self.calculation_directory)
       self.geometry = c.geometry
+      @input_geometry = c.input_geometry
       self.control = c.control
       self.status = c.status
       return self

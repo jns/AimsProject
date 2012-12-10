@@ -55,7 +55,11 @@ module AimsProject
       evt_thread_callback {|evt|
         puts "evt_thread_callback"
         @calcTree.show_calculation(@calculation)
-        show_geometry(@calculation.final_geometry)
+        if @calculation.final_geometry
+          show_geometry(@calculation.final_geometry)
+        else
+          show_geometry(@calculation.input_geometry)
+        end
       }
       
     end

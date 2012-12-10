@@ -5,6 +5,10 @@ module AimsProject
 
     attr_accessor :r, :g, :b, :alpha
 
+    def Material.black
+      Material.new(0,0,0)
+    end
+
     def initialize(r,g,b,alpha=1)
       self.r = r
       self.g = g
