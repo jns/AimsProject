@@ -8,6 +8,7 @@ require 'yaml'
 
 require 'aims_project/project.rb'
 require 'aims_project/calculation.rb'
+require 'aims_project/geometry_file.rb'
 require 'aims_project/aims_project_exception.rb'
 
 # AimsProject is a set of tools for managing and organizing 

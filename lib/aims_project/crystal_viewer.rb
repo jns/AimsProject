@@ -226,8 +226,6 @@ class CrystalViewer < Wx::Panel
     @zmax_plane = Plane.new( 0, 0, 1, 0, 0, zmax)
     @zmin_plane = Plane.new( 0, 0,-1, 0, 0, zmin)
 
-    @active_clip_plane = @zmin_plane
-
     # Add clip-planes to each unit cell
       @unit_cell.clear_planes
       @unit_cell.add_plane(@xmax_plane, false)
@@ -250,11 +248,11 @@ class CrystalViewer < Wx::Panel
 
   # The currently displayed unit cell
   def current_unit_cell
-    self.unit_cell[self.current_cell]
+    self.unit_cell
   end
 
   def dump_geometry
-    atoms = self.unit_cell[self.current_cell]
+    atoms = self.unit_cell
     if atoms
       puts atoms.format_geometry_in
     end
@@ -281,6 +279,29 @@ class CrystalViewer < Wx::Panel
     if self.atom
       @controller.select_atom(self.atom)
       # puts self.atom.format_geometry_in
+    end
+    
+    unless @picked[:planes].empty?
+      clip_plane_id = @picked[:planes].first
+      @active_clip_plane = case clip_plane_id
+      when 1 
+        @zmax_plane
+      when 2
+        @zmin_plane
+      when 3
+        @xmax_plane
+      when 4
+        @xmin_plane
+      when 5
+        @ymax_plane
+      when 6
+        @ymin_plane
+      else
+        nil
+      end
+      if @active_clip_plane
+        set_mouse_motion_function(:move_clip_plane)
+      end
     end
     self.hiRes
 
@@ -350,8 +371,10 @@ class CrystalViewer < Wx::Panel
   end
 
   def pan(x,y)
-    self.offx += (x - self.x_last)*0.1
-    self.offy -= (y - self.y_last)*0.1
+    self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
+    self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
+    self.offz += cos(self.alt)*(x-self.x_last)*0.1
+    
     self.x_last = x
     self.y_last = y
   end
@@ -391,9 +414,9 @@ class CrystalViewer < Wx::Panel
       
     if self.unit_cell
       atoms = self.unit_cell
-      repeat[0].times do |i|
-        repeat[1].times do |j|
-          repeat[2].times do |k|
+      @options.x_repeat.times do |i|
+        @options.y_repeat.times do |j|
+          @options.z_repeat.times do |k|
             
             origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
@@ -420,7 +443,7 @@ class CrystalViewer < Wx::Panel
     if self.orthographic
       glOrtho(-self.ortho_side, self.ortho_side, -self.ortho_side,self.ortho_side, self.ortho_zmin, self.ortho_zmax)
     else
-      gluPerspective(60, self.width/self.height, 1, 60)
+      gluPerspective(60, self.width/self.height, 1, 120)
     end
     glMatrixMode(GL_MODELVIEW)
   end
@@ -454,8 +477,10 @@ class CrystalViewer < Wx::Panel
 
     buf = glSelectBuffer(512)
     glRenderMode(GL_SELECT)
+    model = glGetDoublev(GL_MODELVIEW_MATRIX)
+    proj = glGetDoublev(GL_PROJECTION_MATRIX)
     viewport = glGetIntegerv(GL_VIEWPORT);
-
+    
     self.picking = true
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -465,14 +490,19 @@ class CrystalViewer < Wx::Panel
     else
       gluPerspective(60, self.width/self.height, 1, 60)
     end
+    
+    z = 0.0 # This value is normalized with respect to the near and far clip planes
+    obj_x, obj_y, obj_z = gluUnProject(x, viewport[3]-y, z, model, proj, viewport)
+    puts "obj_x = #{obj_x}, obj_y = #{obj_y}, obj_z = #{obj_z}"
+    
     glMatrixMode(GL_MODELVIEW)
 
     glInitNames
     if self.unit_cell
       atoms = self.unit_cell
-      repeat[0].times do |i|
-        repeat[1].times do |j|
-          repeat[2].times do |k|
+      @options.x_repeat.times do |i|
+        @options.y_repeat.times do |j|
+          @options.z_repeat.times do |k|
             
             origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
@@ -500,7 +530,7 @@ class CrystalViewer < Wx::Panel
       end
     end
 
-    picked_objects = {:atoms => [], :planes => []}
+    picked_objects = {:atoms => [], :planes => [], :bonds => []}
     names.each{|n|
       if (n & PICK_ID_ATOM) == PICK_ID_ATOM
         picked_objects[:atoms] << (n ^ PICK_ID_ATOM)
@@ -546,6 +576,8 @@ class CrystalViewer < Wx::Panel
     vecs = uc.lattice_vectors
     return unless vecs
 
+    puts vecs
+    
     origin = [0, 0, 0]
     v1 = vecs[0]
     v2 = vecs[1]
@@ -695,21 +727,8 @@ class CrystalViewer < Wx::Panel
       else
         r = 2.0
       end
+      
       sphere_quadric = draw_sphere(origin[0] + a.x, origin[1] + a.y, origin[2] + a.z, r, a.id, sphere_quadric)
-      # Complete the unit cell
-      # if atoms.lattice_vectors
-      #   if 0 == @xmin_plane.distance_to_point(a.x, a.y, a.z)
-      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[0][0], a.y + atoms.lattice_vectors[0][1], a.z + atoms.lattice_vectors[0][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
-      #   end
-      # 
-      #   if 0 == @ymin_plane.distance_to_point(a.x, a.y, a.z)
-      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[1][0], a.y + atoms.lattice_vectors[1][1], a.z + atoms.lattice_vectors[1][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
-      #   end
-      # 
-      #   if 0 == @zmin_plane.distance_to_point(a.x, a.y, a.z)
-      #     sphere_quadric = draw_sphere(a.x + atoms.lattice_vectors[2][0], a.y + atoms.lattice_vectors[2][1], a.z + atoms.lattice_vectors[2][2], rmin+(a.z - zmin)*rscale, a.id, sphere_quadric)
-      #   end
-      # end
       
     end
     gluDeleteQuadric(sphere_quadric) if sphere_quadric
@@ -725,6 +744,8 @@ class CrystalViewer < Wx::Panel
         @picked[:atoms].member? id
       when :plane
         @picked[:planes].member? id
+      when :bond
+        @picked[:bonds].member? id
       else
         false
       end

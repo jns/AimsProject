@@ -34,7 +34,7 @@ module AimsProject
       @geomList = ListCtrl.new(topSplitterWindow)
       app.project.geometries.sort{|a,b| a <=> b}.each{|geom|
         li = ListItem.new
-        li.set_text(geom)
+        li.set_text(File.basename(geom))
         li.set_data(geom)
         @geomList.insert_item(li)
       }
@@ -56,6 +56,25 @@ module AimsProject
       }
       
       
+    end
+    
+    # Add a geometry with the given name
+    def add_geometry(filename, geometry)
+      if @app.project.geometries.member? filename
+        @app.error_dialog("#{filename} already exists!")
+      else
+        filename_ext = File.join(GEOMETRY_DIR, filename)
+        File.open(filename_ext, "w") do |f|
+          f.puts geometry.format_geometry_in
+        end
+        @app.project.geometries << geometry
+        li = ListItem.new
+        li.set_text(filename)
+        li.set_data(filename_ext)
+        li.set_state(LIST_STATE_SELECTED)
+        @geomList.insert_item(li)
+        @geomList.sort{|a,b| a <=> b}
+      end
     end
     
      def update
@@ -101,6 +120,11 @@ module AimsProject
       rescue Exception => dang
         @app.error_dialog(dang)
       end
+    end
+    
+    # Get the currently displayed geometry
+    def geometry
+      @original_uc
     end
     
     # Display the given geometry

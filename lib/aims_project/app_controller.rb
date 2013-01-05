@@ -13,17 +13,9 @@ class AppController < Wx::App
     
     @frame = nil
     @menubar = nil
-    @toolbar = nil
-    @geomViewer = nil
-    @geomEditor = nil
     @inspector = nil
     @statusbar = nil
-    @projectTree = nil
-    @calcTree = nil
 
-    # The original Unit Cell
-    @original_uc = nil
-    
     # The project
     attr_accessor :project
     
@@ -58,7 +50,7 @@ class AppController < Wx::App
         @notebook = Notebook.new(@frame)
         
         # Create the geometry notebook page
-        geomWindow = GeometryWindow.new(self, @notebook)
+        @geomWindow = GeometryWindow.new(self, @notebook)
 
         # Create the control window
         # The base window is a horizontal splitter
@@ -76,7 +68,7 @@ class AppController < Wx::App
         calcWindow = CalculationWindow.new(self, @notebook)
         
         # Add windows to the notebook
-        @notebook.add_page(geomWindow, 'Geometry')
+        @notebook.add_page(@geomWindow, 'Geometry')
         @notebook.add_page(controlWindow, "Control")
         @notebook.add_page(calcWindow, "Calculations")
         
@@ -121,34 +113,16 @@ class AppController < Wx::App
      else
        event.skip
      end
-     set_tool
      
    end
-   
-   # Clear then populate the toolbar
-   def populate_toolbar(tb)
-     tb.clear_tools
-     
-     basedir = File.dirname(__FILE__)
-     rotate_icon = Image.new(File.join(basedir,"rotate.gif"), BITMAP_TYPE_GIF)
-     @rotate_tool = tb.add_item(rotate_icon.rescale(16,15).convert_to_bitmap,:label => "rotate", :id => ID_ROTATE)
-     
-     zoom_icon = Image.new(File.join(basedir,"zoom.gif"), BITMAP_TYPE_GIF)
-     @zoom_tool = tb.add_item(zoom_icon.rescale(16,15).convert_to_bitmap, :label => "zoom", :id => ID_ZOOM)
-     
-     pan_icon = Image.new(File.join(basedir,"pan.gif"), BITMAP_TYPE_GIF)
-     @pan_tool = tb.add_item(pan_icon.rescale(16,15).convert_to_bitmap, :label => "pan", :id => ID_PAN)
-     
-     #tb.set_bitmap_size(Size.new(16,15))
-     tb.realize
-   end
+
    
    # Return the menubar.  If it is undefined, then define it and attach the event handler
    def menubar
      unless @menubar
        fileMenu = Menu.new
        fileMenu.append(Wx::ID_OPEN, "Open ...\tCTRL+o")
-       fileMenu.append(Wx::ID_SAVE, "Save Geometry ...\tCTRL+s")
+       fileMenu.append(Wx::ID_SAVE, "Save Geometry As...\tCTRL+s")
        fileMenu.append(ID_SAVE_IMAGE, "Export Image ...")
        fileMenu.append(Wx::ID_EXIT, "Exit")
        
@@ -180,11 +154,6 @@ class AppController < Wx::App
      @frame.set_status_text(string)
    end
    
-   def delete_atom
-     @geomViewer.delete_atom
-   end
-   
-   
    # Get the inspector
    def inspector
      if @inspector.nil?
@@ -201,33 +170,6 @@ class AppController < Wx::App
    # Hide the inspector
    def hide_inspector
      @inspector.hide
-   end
-   
-   def show_calculation(calc)
-     begin
-
-       @original_uc = calc.final_geometry
-       @calcViewer.unit_cell = @original_uc
-       @calcTree.show_calculation(calc)
-       @calcTree.show
-       @calcTree.parent.layout
-#       @geomEditor.unit_cell = @original_uc
-       @inspector.update(@geomViewer)
-       @calcViewer.draw_scene
-       
-     rescue $! => e
-       error_dialog(e)
-     end
-   end
-   
-   
-   # Display the given geometry
-   def show_geometry(geometry)
-     @original_uc = geometry
-     @geomViewer.unit_cell = @original_uc
-     @geomEditor.unit_cell = @original_uc
-     @inspector.update(@geomViewer)
-     @geomViewer.draw_scene
    end
    
    # Display a file dialog and attempt to open and display the file
@@ -264,46 +206,35 @@ class AppController < Wx::App
    
    # Save the geometry
    def save_geometry
-     fd = FileDialog.new(@frame, :message => "Save Geometry", :style => FD_SAVE, :default_dir => @working_dir)
-     if Wx::ID_OK == fd.show_modal
-       begin
-         File.open(fd.get_path, "w") do |f|
-           f.puts @geomViewer.current_unit_cell.format_geometry_in
+     
+     page = @notebook.get_current_page
+     if (page.respond_to? :geometry)  && not(page.geometry.nil?)
+       geometry = @notebook.get_current_page.geometry
+       
+       fd = TextEntryDialog.new(@frame, :message => "Save Geometry", :caption => "Specify name of geometry:")
+       if Wx::ID_OK == fd.show_modal
+         begin
+           geom_name = fd.get_value
+           @geomWindow.add_geometry(geom_name, geometry)
+         rescue Exception => e
+           error_dialog(e)
          end
-         @working_dir = fd.get_directory
-       rescue Exception => e
-         error_dialog(e)
-       end
-     end 
+       end 
+     else
+       error_dialog("No geometry selected.")
+     end
    end
 
    # Display an error dialog for the exception
    def error_dialog(exception)
-     MessageDialog.new(@frame, exception.message, "Error", Wx::ICON_ERROR).show_modal
+     message = if exception.is_a? String
+       exception
+     elsif exception.is_a? Exception
+       exception.message
+     end
+     MessageDialog.new(@frame, message, "Error", Wx::ICON_ERROR).show_modal
    end
    
-   # Check/Uncheck the appropriate tools in the menu and toolbar
-   def set_tool
-      # current_tool = id_for_tool(@geomViewer.mouse_motion_func)
-      # [ID_ROTATE, ID_ZOOM, ID_PAN].each{|id|
-      #   @menubar.check(id, current_tool == id)
-      # }
-   end
-   
-   # Convert between symbols (nice Ruby) and integers (bad C++)
-   def id_for_tool(tool)
-      # case(tool.to_sym)
-      # when :rotate
-      #   ID_ROTATE
-      # when :pan
-      #   ID_PAN
-      # when :zoom
-      #   ID_ZOOM
-      # else
-      #   nil
-      # end
-   end
-
    def save_image
 
      begin

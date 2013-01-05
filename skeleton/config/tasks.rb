@@ -99,6 +99,9 @@ _cset :aims_script, "aims.sh"
       
     end
 
+    # Trigger a synchronize before enqueue
+    before "aims:enqueue", "aims:synchronize"
+
     desc <<-DESC
     Enqueue all staged calculations.  
     This task will:
@@ -138,4 +141,5 @@ _cset :aims_script, "aims.sh"
         end
       end
 
+      
     end

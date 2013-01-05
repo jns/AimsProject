@@ -91,6 +91,11 @@ module AimsProject
      end
     end
 
+    # get the currently displayed geometry
+    def geometry
+      @calcViewer.unit_cell
+    end
+
     # Display the given geometry
     def show_geometry(geometry)
       @calcViewer.unit_cell = geometry

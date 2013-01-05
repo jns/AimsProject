@@ -1,0 +1,5 @@
+lattice_vector 5.65 0 0
+lattice_vector 0 5.65 0
+lattice_vector 0 0 5.65
+atom 0 0 0 Ga
+atom 2.125 2.125 2.125 As

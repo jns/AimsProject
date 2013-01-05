@@ -27,8 +27,7 @@ class Project
         
           return nil unless name
           
-            p = Project.new
-            p.name = name
+            p = Project.new(name)
             
             # Create the project directory
             FileUtils.mkdir(p.relative_path)
@@ -47,6 +46,12 @@ class Project
             # FileUtils.mkdir(File.join(p.relative_path, AimsProject::CALCULATION_DIR))
 
             return p
+      end
+      
+      # Initialize a new project object with the given name.
+      # This does not create the project directory structure, use create for that.
+      def initialize(name)
+        self.name = name
       end
       
       # Return the binding for this project
