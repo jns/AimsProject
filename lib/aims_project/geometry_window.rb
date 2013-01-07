@@ -10,8 +10,8 @@ module AimsProject
       
       super(parent)
       @app = app
-      
-      # Initialize the selection
+            
+      # Initialize the selection of atoms
       @selection = {}
       
       # Tracks whether changes in inspector should update the unit cell
@@ -110,10 +110,9 @@ module AimsProject
         @app.set_status "Opening #{file}"
 
         if (@app.project)
-          erb = ERB.new(File.read(file))
-          show_geometry Aims::GeometryParser.parse_string(erb.result(@app.project.get_binding))
+          show_geometry GeometryFile.new(File.new(file), @app.project.get_binding)
         else
-          show_geometry Aims::GeometryParser.parse(file)
+          show_geometry GeometryFile.new(File.new(file))
         end
 
 

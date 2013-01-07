@@ -25,17 +25,14 @@ module AimsProject
     end
   
     # The filename of the geometry file
-    attr_accessor :file  
-
-    # Boolean maintains whether the atoms are in the packed arrangement or not
-    attr_reader :packed
+    attr_reader :file
     
     # The Aims::Geometry object
     attr_reader :aims_geometry
     
     # The string representation of the parsed input geometry
     attr_reader :input_geometry
-
+    
     # The raw unevaluated input.
     attr_reader :raw_input
 
@@ -46,17 +43,96 @@ module AimsProject
     # @param _binding The binding to use when evaluating with EB
     def initialize(input, _binding=nil)
       
-      if input.kind_of? File
+      if input.respond_to? :read
         @file = input
         @raw_input = @file.read
-        puts @input
       elsif input.is_a? String
         @raw_input = input
       end
-      @input_geometry = GeometryFile.eval_geometry(@raw_input, _binding)
-      @aims_geometry = GeometryParser.parse_string(self.input_geometry)
+      @binding = _binding
+      @input_geometry = GeometryFile.eval_geometry(@raw_input, @binding)
+      @aims_geometry = GeometryParser.parse_string(@input_geometry)
       super(@aims_geometry)
     end
+    
+    # Check the consistency between the raw, the evaluated and the object-space geometries
+    def is_valid?
+      begin
+        validate
+        return true
+      rescue GeometryValidationException => e
+        return false
+      end
+    end
+      
+    # Check the consistency of all internal data models
+    # @return true, otherwise raises a GeoemtryValidationException
+      def validate
+        # The raw input evaluated must match the input_geometry
+        erb = ERB.new(@raw_input)
+        res = erb.result(@binding)
+        unless  res == @input_geometry
+          raise GeometryValidationException("raw input doesn't match evaluated input")
+        end
+      
+        # Also need to somehow validate against the Aims::Geometry
+        g = GeometryParser.parse_string(res)
+        unless g.atoms.size == @aims_geometry.atoms.size
+          raise GeometryValidationException("input geometry atom count doesn't match aims_geometry")
+        end
+        
+        unless g.lattice_vectors.size == @aims_geometry.lattice_vectors.size
+          raise GeometryValidationException("input geometry lattice vector count doesn't match aims_geometry")
+        end
+      
+        g.atoms.each{|a| 
+          unless @aims_geometry.atoms.member?(a)
+            raise GeometryValidationException("atom mismatch")
+          end
+        }
+        
+        g.lattice_vectors.each{|v| 
+          unless @aims_geometry.lattice_vectors.member?(v)
+            raise GeometryValidationException("lattice vector mismatch")
+          end
+        }
+
+        return true
+    end
+    
+    # Save this geometry 
+    # raises an InvalidFilenameException unless @file is not nil
+    # @return  self
+    def save
+      save_as(@file)
+    end
+        
+    # Save the raw input to file if it passes validation
+    # raises an InvalidFilenameException unless @file is not nil
+    # raises a GeometryValidationException if it fails to pass Validation
+    # @return A new GeometryFile object representing the geometry in the newly created file
+    #         or this GeometryFile object if file = nil
+    def save_as(file)
+
+        if file.nil?
+          raise InvalidFilenameException(nil) unless @file
+          file = @file
+        end
+        
+        validate
+        
+        File.open(file, 'w') {|f|
+          f.write @raw_input
+        }
+        
+        if file == @file
+          return self
+        else
+          GeometryFile.new(File.new(file.path, "r"))
+        end
+        
+    end
+    
   end
   
   

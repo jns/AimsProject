@@ -25,4 +25,11 @@ module AimsProject
     end
   end
   
+  class GeometryValidationException < AimsProjectException
+    attr_reader :violations
+    def initialize(violations)
+      @violations = violations
+      super "The Geometry failed validation."
+    end
+  end
 end

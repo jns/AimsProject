@@ -215,6 +215,7 @@ class AppController < Wx::App
        if Wx::ID_OK == fd.show_modal
          begin
            geom_name = fd.get_value
+           geometry.save_as(File.new(geom_name, "w"))
            @geomWindow.add_geometry(geom_name, geometry)
          rescue Exception => e
            error_dialog(e)
@@ -230,8 +231,9 @@ class AppController < Wx::App
      message = if exception.is_a? String
        exception
      elsif exception.is_a? Exception
-       exception.message
+       exception.message + "\n\n" + exception.backtrace[0..2].join("\n")
      end
+     puts message
      MessageDialog.new(@frame, message, "Error", Wx::ICON_ERROR).show_modal
    end
    

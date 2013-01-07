@@ -23,7 +23,8 @@ describe GeometryFile do
 
     it "Should read from a File" do 
       input = File.new(File.join(File.dirname(__FILE__),"geometry.periodic_2atoms.in"))
-      GeometryFile.new(input)
+      g = GeometryFile.new(input)
+      g.atoms.size.should be > 0
     end
 
   end
@@ -78,9 +79,31 @@ describe GeometryFile do
   end
     
 
-  
-  it "Should raise an error for modifications to erb generated atoms" do
+  context "Validation" do
+    g = GeometryFile.new(periodic_2atoms)
+
+    it "The generated geometry should match the formatted aims_geometry" do
+      g.is_valid?.should be_true
+    end
+    
   end
   
+  context "Saving" do 
+    g = GeometryFile.new(periodic_2atoms)
+    
+    it "Should fail if filename is not specified" do
+      expect {g.save}.to raise_error
+    end
+    
+    it "Should not fail if a file (or IO) is specified using save_as" do
+      t = File.new("foo", "w")
+      newg = g.save_as(t)
+      t.close
+      
+      File.new("foo", "r") do |f|
+        f.read.should eq(periodic_2atoms)
+      end
+    end
+  end
   
 end

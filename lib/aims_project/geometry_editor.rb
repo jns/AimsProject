@@ -23,7 +23,13 @@ class GeometryEditor < Wx::ScrolledWindow
     @toggle_button = Button.new(self, ID_ANY, "Code")
     @button_panel.add_item(@toggle_button)
     evt_button(@toggle_button) {|evt|
-      
+      if @toggle_button.get_label == "Code"
+        @text_ctrl.set_value(@unit_cell.raw_input)
+        @toggle_button.set_label("Geometry") 
+      else
+        @text_ctrl.set_value(@unit_cell.input_geometry)
+        @toggle_button.set_label("Code")
+      end
     }
     
     sizer.add(@button_panel)
@@ -41,8 +47,11 @@ class GeometryEditor < Wx::ScrolledWindow
   
   def unit_cell=(uc)
     @unit_cell = uc
-    
-    self.text_ctrl.set_value(uc.format_geometry_in)
+    if @toggle_button.get_label == "Geometry"
+      @text_ctrl.set_value(@unit_cell.raw_input)
+    else
+      @text_ctrl.set_value(@unit_cell.input_geometry)
+    end
   end
   
   def update
