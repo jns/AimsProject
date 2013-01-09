@@ -18,12 +18,22 @@ describe GeometryFile do
 
 
     it "Should read from a String" do 
-      GeometryFile.new(periodic_2atoms)
+      g = GeometryFile.new(periodic_2atoms)
+      
+      g.raw_input.should eq(periodic_2atoms)
+      g.input_geometry.should eq(periodic_2atoms)
+      g.atoms.size.should be > 0
+      
     end
 
     it "Should read from a File" do 
-      input = File.new(File.join(File.dirname(__FILE__),"geometry.periodic_2atoms.in"))
-      g = GeometryFile.new(input)
+      file = File.new(File.join(File.dirname(__FILE__),"geometry.periodic_2atoms.in"))
+      g = GeometryFile.new(file)
+      
+      file = File.new(File.join(File.dirname(__FILE__),"geometry.periodic_2atoms.in"))
+      input = file.read
+      g.raw_input.should eq(input)
+      g.input_geometry.should eq(input)
       g.atoms.size.should be > 0
     end
 
@@ -39,6 +49,10 @@ describe GeometryFile do
 
     it "Should respond to :repeat" do 
       g.repeat(2,2,1).atoms.size.should eq(8)
+    end
+    
+    it "Should respond to :each" do 
+      g.each{|a| a.should be_an_instance_of(Aims::Atom)}
     end
   end
   context "Evaluating ERB" do
@@ -100,7 +114,7 @@ describe GeometryFile do
       newg = g.save_as(t)
       t.close
       
-      File.new("foo", "r") do |f|
+      File.open("foo", "r") do |f|
         f.read.should eq(periodic_2atoms)
       end
     end

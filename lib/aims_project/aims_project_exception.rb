@@ -32,4 +32,11 @@ module AimsProject
       super "The Geometry failed validation."
     end
   end
+  
+  class GeometryEvaluationException < AimsProjectException
+    def initialize
+      super "Error evaluating geometry"
+    end
+  end
+  
 end

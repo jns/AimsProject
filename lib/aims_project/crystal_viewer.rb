@@ -197,12 +197,20 @@ class CrystalViewer < Wx::Panel
     @controller.nudge_selected_atoms(dir[0]*0.5, dir[1]*0.5, 0)
   end
 
+
 =begin
   Set the unit cell to display. 
 =end
   def unit_cell=(uc)
+
+    if @unit_cell
+      @unit_cell.delete_observer(self)
+    end
+    
     @unit_cell = uc
     @unit_cell_corrected = nil
+
+    @unit_cell.add_observer(self, :draw_scene)
 
     Thread.new(self) { |evtHandler|
       @unit_cell_corrected = @unit_cell.correct
@@ -227,15 +235,15 @@ class CrystalViewer < Wx::Panel
     @zmin_plane = Plane.new( 0, 0,-1, 0, 0, zmin)
 
     # Add clip-planes to each unit cell
-      @unit_cell.clear_planes
-      @unit_cell.add_plane(@xmax_plane, false)
-      @unit_cell.add_plane(@xmin_plane, false)
-      @unit_cell.add_plane(@ymax_plane, false)
-      @unit_cell.add_plane(@ymin_plane, false)
-      @unit_cell.add_plane(@zmax_plane, false)
-      @unit_cell.add_plane(@zmin_plane, false)
-      @unit_cell.recache_visible_atoms
-      @unit_cell.make_bonds(@options.bond_length)
+    @unit_cell.clear_planes
+    @unit_cell.add_plane(@xmax_plane, false)
+    @unit_cell.add_plane(@xmin_plane, false)
+    @unit_cell.add_plane(@ymax_plane, false)
+    @unit_cell.add_plane(@ymin_plane, false)
+    @unit_cell.add_plane(@zmax_plane, false)
+    @unit_cell.add_plane(@zmin_plane, false)
+    @unit_cell.recache_visible_atoms
+    @unit_cell.make_bonds(@options.bond_length)
 
 
   end
@@ -371,9 +379,11 @@ class CrystalViewer < Wx::Panel
   end
 
   def pan(x,y)
-    self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
-    self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
-    self.offz += cos(self.alt)*(x-self.x_last)*0.1
+    # self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
+    #     self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
+    #     self.offz += cos(self.alt)*(x-self.x_last)*0.1
+    self.offx = x - self.x_last
+    self.offy = y - self.y_last
     
     self.x_last = x
     self.y_last = y
@@ -403,30 +413,38 @@ class CrystalViewer < Wx::Panel
   end
 
   def draw_scene
+    
     @glPanel.set_current
     sz = @glPanel.size
     viewport_setup(sz.width, sz.height)    
-    draw_init
-    apply_projection
-    position_camera
-    add_lights if @options.show_lighting
-    outline_supercell if @options.show_supercell
+    
+    
+    begin
+      draw_init
+      apply_projection
+      position_camera
+      add_lights if @options.show_lighting
+      outline_supercell if @options.show_supercell
       
-    if self.unit_cell
-      atoms = self.unit_cell
-      @options.x_repeat.times do |i|
-        @options.y_repeat.times do |j|
-          @options.z_repeat.times do |k|
+      if self.unit_cell
+        atoms = self.unit_cell
+        @options.x_repeat.times do |i|
+          @options.y_repeat.times do |j|
+            @options.z_repeat.times do |k|
             
-            origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
+              origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
 
-            draw_bonds(origin) if @options.show_bonds
-            draw_lattice(origin)
+              draw_bonds(origin) if @options.show_bonds
+              draw_lattice(origin)
+            end
           end
         end
       end
+      draw_clip_planes
+    rescue AimsProjectException => e
+      puts e.message
+      puts e.backtrace.join("\n")
     end
-    draw_clip_planes
     
     @glPanel.swap_buffers
   end
@@ -576,8 +594,6 @@ class CrystalViewer < Wx::Panel
     vecs = uc.lattice_vectors
     return unless vecs
 
-    puts vecs
-    
     origin = [0, 0, 0]
     v1 = vecs[0]
     v2 = vecs[1]

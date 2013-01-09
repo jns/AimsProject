@@ -77,20 +77,7 @@ module AimsProject
       end
     end
     
-     def update
-       begin
-         uc = Aims::GeometryParser.parse_string(@geomEditor.get_contents)
-         @original_uc = uc
-         @geomViewer.unit_cell = @original_uc
-         @geomEditor.unit_cell = @original_uc
-         
-         update_viewer
-         @app.set_status("Ok!")
-       rescue Exception => e 
-         @statusbar.status_text = e.message
-       end
-    end
-        
+
     def show_inspector
       @app.inspector.show_inspector_window(@inspector_window)
     end
@@ -128,11 +115,16 @@ module AimsProject
     
     # Display the given geometry
     def show_geometry(geometry)
-      @original_uc = geometry
-      @geomViewer.unit_cell = @original_uc
-      @geomEditor.unit_cell = @original_uc
+      begin
+        @original_uc = geometry
+        @geomViewer.unit_cell = @original_uc
+      rescue AimsProjectException => e
+        @app.error_dialog(e)
+      ensure
+        @geomEditor.unit_cell = @original_uc
+      end
       # @inspector.update(@geomViewer)
-      @geomViewer.draw_scene
+      # @geomViewer.draw_scene
     end
     
     def select_atom(atom)

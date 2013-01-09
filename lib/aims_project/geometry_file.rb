@@ -1,10 +1,12 @@
 require 'erb'
-require 'delegate'
+require 'observer'
 
 module AimsProject
   # The geometry model utilized by this application
-  class GeometryFile < DelegateClass(Aims::Geometry)
+  class GeometryFile 
   
+    include Observable
+    
     # Include Aims here to ensure that ERB will evaluate ruby
     # without prefixing Aims:: when using the builtin binding.
     include Aims
@@ -49,10 +51,49 @@ module AimsProject
       elsif input.is_a? String
         @raw_input = input
       end
-      @binding = _binding
+      
+      begin
+        # Attempt to evaluate the raw input, but don't require it.
+        @binding = _binding
+        evaluate(@binding)
+      rescue
+      end
+    end
+    
+    # Set the raw input
+    # @param str The string to set the raw input to
+    # @param notify Whether or not to notify observer. Set this to false if you intend to call evaluate immediately after
+    def raw_input=(str, notify = true)
+      @raw_input = str
+      if notify
+        changed
+        notify_observers
+      end
+    end
+    
+    # Evaluate the raw input and return a geometry String formatted in the Aims geometry.in format
+    # 
+    def evaluate(_binding=nil)
+      if _binding
+        @binding = _binding
+      end
+      
       @input_geometry = GeometryFile.eval_geometry(@raw_input, @binding)
-      @aims_geometry = GeometryParser.parse_string(@input_geometry)
-      super(@aims_geometry)
+      @aims_geometry = GeometryParser.parse_string(@input_geometry) 
+      
+      changed
+      notify_observers
+      
+      @aims_geometry
+    end
+    
+    # Delegate calls to the Aims::Geometry object if it exists.
+    def method_missing(symbol, *args, &block)
+      if @aims_geometry.nil?
+        raise GeometryEvaluationException.new
+      else
+        @aims_geometry.send(symbol, *args, &block)
+      end
     end
     
     # Check the consistency between the raw, the evaluated and the object-space geometries
