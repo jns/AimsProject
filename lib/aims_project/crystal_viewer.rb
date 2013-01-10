@@ -382,8 +382,8 @@ class CrystalViewer < Wx::Panel
     # self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
     #     self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
     #     self.offz += cos(self.alt)*(x-self.x_last)*0.1
-    self.offx = x - self.x_last
-    self.offy = y - self.y_last
+    self.offx += x - self.x_last
+    self.offy += y - self.y_last
     
     self.x_last = x
     self.y_last = y

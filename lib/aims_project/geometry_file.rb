@@ -113,7 +113,7 @@ module AimsProject
         erb = ERB.new(@raw_input)
         res = erb.result(@binding)
         unless  res == @input_geometry
-          raise GeometryValidationException("raw input doesn't match evaluated input")
+          raise GeometryValidationException.new("raw input doesn't match evaluated input")
         end
       
         # Also need to somehow validate against the Aims::Geometry

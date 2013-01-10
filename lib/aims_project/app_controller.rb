@@ -6,6 +6,7 @@ class AppController < Wx::App
   
     ID_SAVE_IMAGE = 103  
     ID_MOVE_CLIP_PLANE = 104
+    ID_SAVE_AS = 105
 
     ID_INSPECTOR = 201
 
@@ -106,6 +107,8 @@ class AppController < Wx::App
        open_file
      when Wx::ID_SAVE
        save_geometry
+     when ID_SAVE_AS
+       save_geometry_as
      when ID_SAVE_IMAGE
        save_image
      when Wx::ID_EXIT
@@ -122,7 +125,8 @@ class AppController < Wx::App
      unless @menubar
        fileMenu = Menu.new
        fileMenu.append(Wx::ID_OPEN, "Open ...\tCTRL+o")
-       fileMenu.append(Wx::ID_SAVE, "Save Geometry As...\tCTRL+s")
+       fileMenu.append(Wx::ID_SAVE, "Save Geometry\tCTRL+s")
+       fileMenu.append(ID_SAVE_AS, "Save Geometry As...")
        fileMenu.append(ID_SAVE_IMAGE, "Export Image ...")
        fileMenu.append(Wx::ID_EXIT, "Exit")
        
@@ -204,8 +208,20 @@ class AppController < Wx::App
    end
    alias_method :open_file, :open_geometry_file
    
-   # Save the geometry
    def save_geometry
+     page = @notebook.get_current_page
+     if (page.respond_to? :geometry)  && not(page.geometry.nil?)
+       geometry = @notebook.get_current_page.geometry
+       begin
+         geometry.save
+       rescue Exception => e
+         error_dialog(e)
+       end
+     end     
+   end
+   
+   # Save the geometry
+   def save_geometry_as
      
      page = @notebook.get_current_page
      if (page.respond_to? :geometry)  && not(page.geometry.nil?)
@@ -215,8 +231,8 @@ class AppController < Wx::App
        if Wx::ID_OK == fd.show_modal
          begin
            geom_name = fd.get_value
-           geometry.save_as(File.new(geom_name, "w"))
-           @geomWindow.add_geometry(geom_name, geometry)
+           new_geom  = geometry.save_as(File.new(File.join(GEOMETRY_DIR, geom_name), "w"))
+           @geomWindow.add_geometry(new_geom)
          rescue Exception => e
            error_dialog(e)
          end
