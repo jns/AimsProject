@@ -98,8 +98,7 @@ module AimsProject
 
     # Display the given geometry
     def show_geometry(geometry)
-      @calcViewer.unit_cell = geometry
-      @calcViewer.draw_scene
+      @calcViewer.unit_cell = GeometryFile.new(geometry)
     end
     
     def select_atom(atom)

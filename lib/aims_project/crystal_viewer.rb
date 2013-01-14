@@ -210,42 +210,52 @@ class CrystalViewer < Wx::Panel
     @unit_cell = uc
     @unit_cell_corrected = nil
 
-    @unit_cell.add_observer(self, :draw_scene)
-
-    Thread.new(self) { |evtHandler|
-      @unit_cell_corrected = @unit_cell.correct
-      evt = ThreadCallbackEvent.new
-      evtHandler.add_pending_event(evt)
-    }
+    init_clip_planes
     
-    # each bounding box is a 2 element array [max, min]
-    bounding_box = @unit_cell.bounding_box(false)
-    xmax = bounding_box[0].x
-    xmin = bounding_box[1].x
-    ymax = bounding_box[0].y
-    ymin = bounding_box[1].y
-    zmax = bounding_box[0].z
-    zmin = bounding_box[1].z
+    @unit_cell.add_observer(self, :unit_cell_changed)
 
-    @xmax_plane = Plane.new( 1, 0, 0, xmax, 0, 0)
-    @xmin_plane = Plane.new(-1, 0, 0, xmin, 0, 0)
-    @ymax_plane = Plane.new( 0, 1, 0, 0, ymax, 0)
-    @ymin_plane = Plane.new( 0,-1, 0, 0, ymin, 0)
-    @zmax_plane = Plane.new( 0, 0, 1, 0, 0, zmax)
-    @zmin_plane = Plane.new( 0, 0,-1, 0, 0, zmin)
+  end
 
-    # Add clip-planes to each unit cell
-    @unit_cell.clear_planes
-    @unit_cell.add_plane(@xmax_plane, false)
-    @unit_cell.add_plane(@xmin_plane, false)
-    @unit_cell.add_plane(@ymax_plane, false)
-    @unit_cell.add_plane(@ymin_plane, false)
-    @unit_cell.add_plane(@zmax_plane, false)
-    @unit_cell.add_plane(@zmin_plane, false)
-    @unit_cell.recache_visible_atoms
-    @unit_cell.make_bonds(@options.bond_length)
+  def unit_cell_changed
+    init_clip_planes
+    draw_scene
+  end
 
+  def init_clip_planes
 
+      Thread.new(self) { |evtHandler|
+        @unit_cell_corrected = @unit_cell.correct
+        evt = ThreadCallbackEvent.new
+        evtHandler.add_pending_event(evt)
+      }
+    
+      # each bounding box is a 2 element array [max, min]
+      bounding_box = @unit_cell.bounding_box(false)
+      xmax = bounding_box[0].x
+      xmin = bounding_box[1].x
+      ymax = bounding_box[0].y
+      ymin = bounding_box[1].y
+      zmax = bounding_box[0].z
+      zmin = bounding_box[1].z
+
+      @xmax_plane = Plane.new( 1, 0, 0, xmax, 0, 0)
+      @xmin_plane = Plane.new(-1, 0, 0, xmin, 0, 0)
+      @ymax_plane = Plane.new( 0, 1, 0, 0, ymax, 0)
+      @ymin_plane = Plane.new( 0,-1, 0, 0, ymin, 0)
+      @zmax_plane = Plane.new( 0, 0, 1, 0, 0, zmax)
+      @zmin_plane = Plane.new( 0, 0,-1, 0, 0, zmin)
+
+      # Add clip-planes to each unit cell
+      @unit_cell.clear_planes
+      @unit_cell.add_plane(@xmax_plane, false)
+      @unit_cell.add_plane(@xmin_plane, false)
+      @unit_cell.add_plane(@ymax_plane, false)
+      @unit_cell.add_plane(@ymin_plane, false)
+      @unit_cell.add_plane(@zmax_plane, false)
+      @unit_cell.add_plane(@zmin_plane, false)
+      @unit_cell.recache_visible_atoms
+      @unit_cell.make_bonds(@options.bond_length)
+    
   end
 
   def dump_properties

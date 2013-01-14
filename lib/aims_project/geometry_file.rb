@@ -50,6 +50,10 @@ module AimsProject
         @raw_input = @file.read
       elsif input.is_a? String
         @raw_input = input
+      elsif input.is_a? Aims::Geometry
+        @aims_geometry = input
+        @input_geometry = @aims_geometry.format_geometry_in
+        @raw_input = @input_geometry
       end
       
       begin
