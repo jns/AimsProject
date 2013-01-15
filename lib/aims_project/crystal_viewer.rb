@@ -34,7 +34,7 @@ class CrystalViewer < Wx::Panel
 
   attr_accessor :ortho_side, :ortho_zmin, :ortho_zmax
   attr_accessor :x_down, :y_down, :alt, :az, :offx, :offy, :offz
-  attr_accessor :orthographic, :width, :height, :picking, :atom, :x_last, :y_last
+  attr_accessor :orthographic, :width, :height, :picking, :atom, :x_last, :y_last, :z_last
   attr_accessor :render_mode
   
   attr_accessor :xmax_plane, :xmin_plane
@@ -162,6 +162,7 @@ class CrystalViewer < Wx::Panel
     self.y_down = 0
     self.x_last = 0
     self.y_last = 0
+    self.z_last = 0
     self.alt = 0
     self.az = 0
     self.offx = 0
@@ -335,7 +336,8 @@ class CrystalViewer < Wx::Panel
     # Harmless correction for bug in WxRuby that doesn't register all mouse down events
     self.x_last = x if self.x_last.nil?
     self.y_last = y if self.y_last.nil? 
-
+    self.z_last = z if self.z_last.nil?
+    
     case self.mouse_motion_func
     when :rotate 
       rotate(x,y)
@@ -389,14 +391,29 @@ class CrystalViewer < Wx::Panel
   end
 
   def pan(x,y)
+    
+    z = 0.0 # This value is normalized with respect to the near and far clip planes
+
+    model = glGetDoublev(GL_MODELVIEW_MATRIX)
+    proj = glGetDoublev(GL_PROJECTION_MATRIX)
+    viewport = glGetIntegerv(GL_VIEWPORT);
+
+    obj_x, obj_y, obj_z = gluUnProject(x, viewport[3]-y, z, model, proj, viewport)
+    obj_x_last, obj_y_last, obj_z_last = gluUnProject(x_last, viewport[3]-y_last, z_last, model, proj, viewport)
+    @center.x += obj_x_last - obj_x
+    @center.y += obj_y_last - obj_y
+    @center.z += obj_z_last - obj_z
+    # puts "%f %f %f" % [@center.x, @center.y, @center.z]
+    
     # self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
     #     self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
     #     self.offz += cos(self.alt)*(x-self.x_last)*0.1
-    self.offx += x - self.x_last
-    self.offy += y - self.y_last
+    # self.offx += x - self.x_last
+    # self.offy += y - self.y_last
     
     self.x_last = x
     self.y_last = y
+    self.z_last = z
   end
 
   def loRes
@@ -521,7 +538,6 @@ class CrystalViewer < Wx::Panel
     
     z = 0.0 # This value is normalized with respect to the near and far clip planes
     obj_x, obj_y, obj_z = gluUnProject(x, viewport[3]-y, z, model, proj, viewport)
-    puts "obj_x = #{obj_x}, obj_y = #{obj_y}, obj_z = #{obj_z}"
     
     glMatrixMode(GL_MODELVIEW)
 
@@ -576,7 +592,7 @@ class CrystalViewer < Wx::Panel
     atoms = self.unit_cell
     
     # Find the center of all atoms, not just visible ones.
-    center = atoms.center
+    @center = atoms.center unless @center
 
     # Move camera out along z-axis
     glMatrixMode(GL_MODELVIEW)
@@ -585,7 +601,7 @@ class CrystalViewer < Wx::Panel
     glTranslatef(self.offx,self.offy,self.offz)
     glRotatef(self.alt, 1, 0, 0)
     glRotatef(self.az, 0, 0, 1)
-    glTranslatef(-center.x, -center.y, -center.z)
+    glTranslatef(-@center.x, -@center.y, -@center.z)
   end
 
   def add_lights
