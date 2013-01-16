@@ -359,17 +359,44 @@ class CrystalViewer < Wx::Panel
       self.unit_cell.remove_atom(self.atom)
     end
   end
-  
+
+  # Unproject the mouse coordinates to model space
+  # Handles the flipping of the y-coordinate
+  def unproject(x,y,z)
+    model = glGetDoublev(GL_MODELVIEW_MATRIX)
+    proj = glGetDoublev(GL_PROJECTION_MATRIX)
+    viewport = glGetIntegerv(GL_VIEWPORT);
+
+    gluUnProject(x, viewport[3]-y, z, model, proj, viewport)
+  end
+
+  # Cast a ray from the near clip-plane to the far clip-plane through the point x,y
+  # return a two element array
+  #   element 0 is the model space coordinates of (x,y) on the near clip plane 
+  #   element 1 is the direction of the ray
+  def cast_ray_to(x,y)
+    x1,y1,z1 = unproject(x,y,0)
+    x2,y2,z2 = unproject(x,y,1)
+    [ Vector[x1, y1, z1], Vector[x2-x1, y2-y1, z2-z1] ]
+  end
 
   def move_clip_plane(x,y)
-    scale = 0.1
-    dx = (x - self.x_last)
-    dy = (y - self.y_last)
-    dr = sqrt(dx*dx + dy*dy)*(0 > dy ? -1 : 1)*scale
+    
+    x_obj_last, y_obj_last, z_obj_last = unproject(x_last, y_last, 0)
+    x_obj, y_obj, z_obj = unproject(x,y,0)
+
+    w = [x_obj - x_obj_last, y_obj - y_obj_last, z_obj - z_obj_last]
+    n = @active_clip_plane.unit_normal
+    d = w[0]*n[0] + w[1]*n[1] + w[2]*n[2]
+    
+    # scale = 0.1
+    # dx = (x - self.x_last)
+    # dy = (y - self.y_last)
+    # dr = sqrt(dx*dx + dy*dy)*(0 > dy ? -1 : 1)*scale
     self.x_last = x
     self.y_last = y
 
-    @active_clip_plane.displace_along_normal(dr)
+    @active_clip_plane.displace_along_normal(d)
     self.atoms_changed = true
   end
 
@@ -394,22 +421,11 @@ class CrystalViewer < Wx::Panel
     
     z = 0.0 # This value is normalized with respect to the near and far clip planes
 
-    model = glGetDoublev(GL_MODELVIEW_MATRIX)
-    proj = glGetDoublev(GL_PROJECTION_MATRIX)
-    viewport = glGetIntegerv(GL_VIEWPORT);
-
-    obj_x, obj_y, obj_z = gluUnProject(x, viewport[3]-y, z, model, proj, viewport)
-    obj_x_last, obj_y_last, obj_z_last = gluUnProject(x_last, viewport[3]-y_last, z_last, model, proj, viewport)
+    obj_x, obj_y, obj_z = unproject(x, y, z)
+    obj_x_last, obj_y_last, obj_z_last = unproject(x_last, y_last, z_last)
     @center.x += obj_x_last - obj_x
     @center.y += obj_y_last - obj_y
     @center.z += obj_z_last - obj_z
-    # puts "%f %f %f" % [@center.x, @center.y, @center.z]
-    
-    # self.offx += sin(self.alt)*cos(self.az)*(x - self.x_last)*0.1
-    #     self.offy -= sin(self.alt)*sin(self.az)*(y - self.y_last)*0.1
-    #     self.offz += cos(self.alt)*(x-self.x_last)*0.1
-    # self.offx += x - self.x_last
-    # self.offy += y - self.y_last
     
     self.x_last = x
     self.y_last = y

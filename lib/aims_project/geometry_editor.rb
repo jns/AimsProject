@@ -50,10 +50,15 @@ class GeometryEditor < Wx::ScrolledWindow
 
         
     evt_button(@eval_button) {|event|
-      @unit_cell.raw_input = @text_ctrl.get_text
-      @unit_cell.evaluate
+        self.evaluate
     }
 
+  end
+  
+  # Apply the edits to the geometry_file and evaluate
+  def evaluate
+    @unit_cell.raw_input = @text_ctrl.get_text
+    @unit_cell.evaluate    
   end
   
   def unit_cell=(uc)
