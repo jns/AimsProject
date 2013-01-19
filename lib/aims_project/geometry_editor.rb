@@ -27,9 +27,12 @@ class GeometryEditor < Wx::ScrolledWindow
     arrow_icon = Image.new(File.join(basedir,"green_arrow.jpg"), BITMAP_TYPE_JPEG)
     @eval_button = BitmapButton.new(self, :bitmap => arrow_icon.rescale(16,15).convert_to_bitmap,:style=>BU_EXACTFIT, :name => "evaluate")
     
-    @button_panel.add_item(@toggle_source)
+    # error_icon = Image.new(File.join(basedir, "red_cross.jpeg"), BITMAP_TYPE_JPEG)
+    # @clear_errors_button = BitmapButton.new(self, :bitmap => error_icon.rescale(16,15).convert_to_bitmap,:style=>BU_EXACTFIT, :name => "Clear Errors")
+    
+    @button_panel.add_item(@toggle_source,1)
     @button_panel.add_stretch_spacer
-    @button_panel.add_item(@eval_button)
+    @button_panel.add_item(@eval_button,3)
     
     evt_checkbox(@toggle_source) {|evt|
       if @toggle_source.is_checked
@@ -42,8 +45,8 @@ class GeometryEditor < Wx::ScrolledWindow
       end
     }
     
-    sizer.add(@button_panel)
-    sizer.add(@text_ctrl, 1, EXPAND | ALL, 5)
+    sizer.add_item(@button_panel, :flag => EXPAND)
+    sizer.add_item(@text_ctrl, :proportion => 1, :flag => EXPAND | ALL, :border => 5)
 
     set_auto_layout(true)
     set_sizer(sizer)
@@ -58,7 +61,12 @@ class GeometryEditor < Wx::ScrolledWindow
   # Apply the edits to the geometry_file and evaluate
   def evaluate
     @unit_cell.raw_input = @text_ctrl.get_text
-    @unit_cell.evaluate    
+    begin
+      @unit_cell.evaluate    
+    rescue 
+      # @button_pane.add_item(@clear_errors_button, 3)
+      @text_ctrl.set_text($!.message + $!.backtrace.join("\n"))
+    end
   end
   
   def unit_cell=(uc)

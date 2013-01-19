@@ -4,6 +4,8 @@ module AimsProject
 
     include Wx
     
+    CALC_TABLE_COLS=4
+    
     def initialize(app, parent)
       
       super(parent)
@@ -26,8 +28,16 @@ module AimsProject
       set_sizer(sizer)
       
       # The top is a list control
-      @calcList = ListCtrl.new(topSplitterWindow)
-      
+      @calcTable = Grid.new(topSplitterWindow, -1)
+      init_table
+
+      # Populate the calculations list
+      @calcs = @app.project.calculations.sort{|a,b| a.name <=> b.name}
+      @calcs.each_with_index{|calc, i|
+        add_calc_at_row(calc, i)
+      }
+      @calcTable.auto_size
+
       # The bottom is a vertical splitter
       calcWindowSplitter = SplitterWindow.new(topSplitterWindow)
       
@@ -36,24 +46,17 @@ module AimsProject
       @calcViewer = CrystalViewer.new(self, calcWindowSplitter, @options)
       calcWindowSplitter.split_vertically(@calcTree, @calcViewer)
 
-      # Split the top and bottom
-      topSplitterWindow.split_horizontally(@calcList, calcWindowSplitter, 100)
 
-      # Populate the calculations list
-      @app.project.calculations.sort{|a,b| a.name <=> b.name}.each{|calc|
-        li = ListItem.new
-        li.set_text(calc.name)
-        li.set_data(calc)
-        @calcList.insert_item(li)
-      }
+      # Split the top and bottom
+      topSplitterWindow.split_horizontally(@calcTable, calcWindowSplitter, 100)
 
       # Setup the events
-      evt_list_item_selected(@calcList) {|evt|
-        show_calculation(evt.get_item.get_data)
+      evt_grid_cmd_range_select(@calcTable) {|evt|
+        row = evt.get_top_row
+        show_calculation(@calcs[row])
       }
       
       evt_thread_callback {|evt|
-        puts "evt_thread_callback"
         @calcTree.show_calculation(@calculation)
         if @calculation.final_geometry
           show_geometry(@calculation.final_geometry)
@@ -62,6 +65,23 @@ module AimsProject
         end
       }
       
+    end
+    
+    def init_table
+      @calcTable.create_grid(@app.project.calculations.size, CALC_TABLE_COLS, Grid::GridSelectRows)
+      @calcTable.set_col_label_value(0, "Geometry")
+      @calcTable.set_col_label_value(1, "Subdirectory")
+      @calcTable.set_col_label_value(2, "Control")
+      @calcTable.set_col_label_value(3, "Status")
+      
+    end
+
+    # Insert a calculation in the table at the specified row
+    def add_calc_at_row(calc, row)
+      @calcTable.set_cell_value(row, 0, calc.geometry)
+      @calcTable.set_cell_value(row, 1, calc.calc_subdir.to_s)
+      @calcTable.set_cell_value(row, 2, calc.control)
+      @calcTable.set_cell_value(row, 3, calc.status)
     end
 
     def show_inspector
