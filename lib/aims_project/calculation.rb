@@ -245,6 +245,11 @@ module AimsProject
       # Create a new geometry file
       geometry_orig = self.geometry_file
       
+      # Append the subdirectory if a subdir
+      if @calc_subdir
+        geometry_orig = geometry_orig + ".#{calc_subdir}"
+      end
+      
       # If restarting a restart, then increment the digit
       if (geometry_orig.split(".").last =~ /restart(\d+)/)
         n = $1.to_i

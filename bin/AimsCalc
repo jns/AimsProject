@@ -192,8 +192,12 @@ end
 
 # Generate a new calculation by calling Calculation::restart_relaxation
 def restart_calculation(calculation)
-  calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
-  calc = AimsProject::Calculation.load(calc_dir)
+  calc = begin
+    AimsProject::Calculation.load(calculation)
+  rescue ObjectFileNotFoundException
+    calc_dir = File.join(AimsProject::CALCULATION_DIR, File.basename(calculation))
+    calc = AimsProject::Calculation.load(calc_dir)
+  end
   newcalc = calc.restart_relaxation
   puts "Created #{newcalc.name}"
 end

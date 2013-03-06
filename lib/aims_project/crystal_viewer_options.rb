@@ -37,7 +37,7 @@ module AimsProject
       panel1.add_item(add_control(:show_lighting, CheckBox.new(inspector_window, :label => 'Show Lighting')), :flag => ALL, :border => border)
       panel1.add_item(add_control(:show_supercell, CheckBox.new(inspector_window, :label => "Show Unit Cell")), :flag => ALL, :border => border)
       panel1.add_item(add_control(:correct, CheckBox.new(inspector_window, :label => "Correct Geometry")), :flag => ALL, :border => border)
-      panel1.add_item(add_control(:transparent_bg, CheckBox.new(inspector_window, :label => "Transparent BG")), :flag => ALL, :border => border)
+      panel1.add_item(add_control(:solid_bg, CheckBox.new(inspector_window, :label => "Solid BG")), :flag => ALL, :border => border)
       
       gsizer = GridSizer.new(2,1)
       gsizer.add(StaticText.new(inspector_window, :label => "Bond Length"))
@@ -72,7 +72,7 @@ module AimsProject
        inspector_window.evt_checkbox(@show_bonds) {|evt| changed; notify_observers}
        inspector_window.evt_checkbox(@show_lighting) {|evt| changed; notify_observers}
        inspector_window.evt_checkbox(@show_supercell) {|evt| changed; notify_observers}
-       inspector_window.evt_checkbox(@transparent_bg) {|evt| changed; notify_observers}
+       inspector_window.evt_checkbox(@solid_bg) {|evt| changed; notify_observers}
        inspector_window.evt_checkbox(@correct) {|evt| changed; notify_observers }
        inspector_window.evt_spinctrl(@bond_length) {|evt| changed; notify_observers }
        inspector_window.evt_checkbox(@show_xclip) {|evt| changed; notify_observers}
@@ -81,7 +81,6 @@ module AimsProject
        inspector_window.evt_spinctrl(@x_repeat) {|evt| changed; notify_observers}
        inspector_window.evt_spinctrl(@y_repeat) {|evt| changed; notify_observers}
        inspector_window.evt_spinctrl(@z_repeat) {|evt| changed; notify_observers}
-
 
        # Add sub-panels
        inspector_window.sizer.add_item(panel1, :flag => EXPAND, :proportion => 1)

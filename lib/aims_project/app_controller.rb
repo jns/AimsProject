@@ -256,16 +256,19 @@ class AppController < Wx::App
    def save_image
 
      begin
-       fd = FileDialog.new(@frame, :message => "Save Image", :style => FD_SAVE, :default_dir => @working_dir)
-       if Wx::ID_OK == fd.show_modal
-         @working_dir = fd.get_directory
+       page = @notebook.get_current_page
+       if (page.respond_to? :image) 
+         image = page.image
+         fd = FileDialog.new(@frame, :message => "Save Image", :style => FD_SAVE, :default_dir => @working_dir)
+         if Wx::ID_OK == fd.show_modal
+           @working_dir = fd.get_directory
+            puts "Writing #{fd.get_path}"
+            image.mirror(false).save_file(fd.get_path)
+          end
+       else
+         error_dialog("Sorry, could not generate an image.")
+       end
 
-       		image = Image.new(@geomViewer.width, @geomViewer.height)
-          image.set_rgb_data(@geomViewer.rgb_image_data)
-          image.set_alpha_data(@geomViewer.alpha_image_data)
-          puts "Writing #{fd.get_path}"
-          image.mirror(false).save_file(fd.get_path)
-        end
       rescue Exception => e
         error_dialog(e)
       end

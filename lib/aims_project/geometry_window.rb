@@ -100,6 +100,10 @@ module AimsProject
       end
     end
     
+    def image
+      @geomViewer.image
+    end
+    
     # Get the currently displayed geometry
     def geometry
       @original_uc
@@ -121,6 +125,8 @@ module AimsProject
     
     def select_atom(atom)
       @selection[:atoms] = [atom]
+      puts "Selection:" 
+      puts @selection[:atoms].each{|a| puts a.format_geometry_in}
       @geomEditor.select_atom(atom)
     end
     

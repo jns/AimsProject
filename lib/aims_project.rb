@@ -83,10 +83,10 @@ require 'aims_project/aims_project_exception.rb'
 # * +control/tight+
 #
 # Now run 
-#    > AimsCalc alpha light
-#    > AimsCalc beta light
-#    > AimsCalc alpha tight
-#    > AimsCalc beta tight
+#    > AimsCalc create alpha light
+#    > AimsCalc create beta light
+#    > AimsCalc create alpha tight
+#    > AimsCalc create beta tight
 #
 # This will create four subdirectories inside +calculations/+.
 #    > ls calculations/*

@@ -52,8 +52,11 @@ module AimsProject
 
       # Setup the events
       evt_grid_cmd_range_select(@calcTable) {|evt|
-        row = evt.get_top_row
-        show_calculation(@calcs[row])
+        if evt.selecting
+          row = evt.get_top_row
+          puts "CalculationWindow.show_calculation #{@calcs[row].calculation_directory}"
+          show_calculation(@calcs[row])        
+        end
       }
       
       evt_thread_callback {|evt|
@@ -109,6 +112,11 @@ module AimsProject
        puts e.backtrace
        @app.error_dialog(e)
      end
+    end
+
+    # Get an Image
+    def image
+      @calcViewer.image
     end
 
     # get the currently displayed geometry

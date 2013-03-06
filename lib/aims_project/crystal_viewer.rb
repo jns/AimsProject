@@ -510,7 +510,7 @@ class CrystalViewer < Wx::Panel
   end
 
   def draw_init
-    glClearColor(background.r,background.g,background.b,background.alpha)
+    glClearColor(background.r,background.g,background.b,@options.solid_bg)
     glEnable(GL_DEPTH_TEST)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -865,7 +865,7 @@ class CrystalViewer < Wx::Panel
     # draw z_planes
     # The are bounded by the min and max points in the x-y plane
 
-    if @options.show_zclip
+    if @options.show_zclip and @zmax_plane and @zmin_plane
       z = -1*@zmax_plane.distance_to_point(0,0,0)
       draw_plane(@zmax_plane, [[bbx1, bby1, z],
                                [bbx2, bby1, z],
@@ -879,7 +879,7 @@ class CrystalViewer < Wx::Panel
                                 [bbx1, bby2, z]],2)
     end
 
-    if @options.show_xclip
+    if @options.show_xclip and @xmax_plane and @xmin_plane
       x = -1*@xmax_plane.distance_to_point(0,0,0)
       draw_plane(@xmax_plane, [[x, bby1, bbz1],
                                [x, bby1, bbz2],
@@ -893,7 +893,7 @@ class CrystalViewer < Wx::Panel
                                 [x, bby2, bbz1]],4)
     end
 
-    if @options.show_yclip
+    if @options.show_yclip and @ymax_plane and @ymin_plane
       y = -1*@ymax_plane.distance_to_point(0,0,0)
       draw_plane(@ymax_plane, [[bbx1, y, bbz1],
                                [bbx1, y, bbz2],
@@ -928,6 +928,13 @@ class CrystalViewer < Wx::Panel
 
     glReadPixels(0, 0, self.width, self.height, Gl::GL_RGBA, Gl::GL_UNSIGNED_BYTE)
 
+  end
+
+  def image
+    image = Image.new(self.width, self.height)
+    image.set_rgb_data(self.rgb_image_data)
+    image.set_alpha_data(self.alpha_image_data)
+ 		image
   end
 
   def rgb_image_data

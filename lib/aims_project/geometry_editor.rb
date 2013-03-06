@@ -88,6 +88,8 @@ class GeometryEditor < Wx::ScrolledWindow
     selectionStyle = Wx::RichTextAttr.new(Wx::BLACK, Wx::Colour.new("YELLOW"))
     
     pattern = atom.format_geometry_in
+    puts "GeometryEditor.select_atom: pattern=#{pattern}"
+
     matchdata = self.text_ctrl.get_text.match(pattern)
     if matchdata
       lineStart = matchdata.begin(0)
