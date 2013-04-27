@@ -756,14 +756,19 @@ class CrystalViewer < Wx::Panel
     return unless atoms
     
     # Create sphere object
-    rmin = 0.3
+    rmin = 0.2
     rmax = 0.5
 
+    if self.atoms_changed
+      atoms.recache_visible_atoms 
+      self.atoms_changed = false
+    end
+    
     # Calculate radius scaling factor vs. depth
     rrange = rmax - rmin
-    bb = atoms.bounding_box
-    zmin = bb[0].z < bb[1].z ? bb[0].z : bb[1].z
-    zmax = bb[0].z < bb[1].z ? bb[1].z : bb[0].z
+    # bb = atoms.bounding_box
+    zmin = atoms.min{|a,b| a.z <=> b.z}.z
+    zmax = atoms.max{|a,b| a.z <=> b.z}.z
     zrange = zmax - zmin
     if zrange == 0
       rscale = 0
@@ -771,10 +776,7 @@ class CrystalViewer < Wx::Panel
       rscale = rrange/zrange
     end
 
-    if self.atoms_changed
-      atoms.recache_visible_atoms 
-      self.atoms_changed = false
-    end
+
 
     sphere_quadric = nil
     for a in atoms

@@ -10,7 +10,6 @@ class Project
       # The name of this project
       attr_accessor :name
 
-
       # Load a Project from the serialized yaml file
       def Project.load(filename)
         yamlfile = [filename, filename+".yaml"].find{|f| File.exists?(f)}

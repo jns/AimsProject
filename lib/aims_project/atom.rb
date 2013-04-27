@@ -28,7 +28,8 @@ module Aims
       @@dark = nil
       @@light = nil
 	  @@yellow = nil
-  
+    @@orange = nil
+    @@graypurple = nil
   
       def material
 	    unless @@yellow
@@ -55,6 +56,14 @@ module Aims
           @@green = AimsProject::Material.new(0,1,0,1)
         end
     
+        unless @@orange
+          @@orange = AimsProject::Material.new(1, 0.5, 0, 1)
+        end
+        
+        unless @@graypurple
+          @@graypurple = AimsProject::Material.new(0.6, 0.4, 0.4, 1)
+        end
+        
         unless @@dark
           @@dark =  AimsProject::Material.new(0.2,0.2,0.2,1)
         end
@@ -69,7 +78,9 @@ module Aims
         when /As/
           @@light
         when /In/
-          @@green
+          @@graypurple
+        when /P/
+          @@orange
 		when /Si/
 		  @@yellow
 		when /C/
@@ -79,5 +90,6 @@ module Aims
         end
       end
     end
+
 
 end
