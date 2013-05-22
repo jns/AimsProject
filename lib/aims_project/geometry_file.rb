@@ -164,7 +164,7 @@ module AimsProject
           file = @file
         end
         
-        validate
+        # validate
         
         File.open(file, 'w') {|f|
           f.write @raw_input

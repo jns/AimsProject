@@ -61,7 +61,7 @@ module Aims
         end
         
         unless @@graypurple
-          @@graypurple = AimsProject::Material.new(0.6, 0.4, 0.4, 1)
+          @@graypurple = AimsProject::Material.new(0.45, 0.55, 0.55, 1)
         end
         
         unless @@dark

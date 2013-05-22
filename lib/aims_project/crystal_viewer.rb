@@ -704,6 +704,7 @@ class CrystalViewer < Wx::Panel
     else
         @unit_cell
     end
+    return unless atoms.bonds
 
     Material.black.apply
     glLineWidth(1.0)

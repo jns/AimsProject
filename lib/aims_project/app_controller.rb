@@ -4,6 +4,7 @@ class AppController < Wx::App
   
     include Wx
   
+    ID_NEW = 102
     ID_SAVE_IMAGE = 103  
     ID_MOVE_CLIP_PLANE = 104
     ID_SAVE_AS = 105
@@ -107,6 +108,8 @@ class AppController < Wx::App
        open_file
      when Wx::ID_SAVE
        save_geometry
+     when ID_NEW
+       new_geometry_file
      when ID_SAVE_AS
        save_geometry_as
      when ID_SAVE_IMAGE
@@ -124,6 +127,7 @@ class AppController < Wx::App
    def menubar
      unless @menubar
        fileMenu = Menu.new
+       fileMenu.append(ID_NEW, "New Geometry ...")
        fileMenu.append(Wx::ID_OPEN, "Open ...\tCTRL+o")
        fileMenu.append(Wx::ID_SAVE, "Save Geometry\tCTRL+s")
        fileMenu.append(ID_SAVE_AS, "Save Geometry As...")
@@ -174,6 +178,21 @@ class AppController < Wx::App
    # Hide the inspector
    def hide_inspector
      @inspector.hide
+   end
+   
+   # Create a new geometry file
+   def new_geometry_file(file = nil)
+     fd = TextEntryDialog.new(@frame, :message => "New Geometry", :caption => "Specify name of geometry:")
+      if Wx::ID_OK == fd.show_modal
+        begin
+          geom_name = fd.get_value
+          geometry = GeometryFile.new("")
+          geometry = geometry.save_as(File.new(File.join(GEOMETRY_DIR, geom_name), "w"))
+          @geomWindow.add_geometry(geometry)
+        rescue Exception => e
+          error_dialog(e)
+        end
+      end
    end
    
    # Display a file dialog and attempt to open and display the file
