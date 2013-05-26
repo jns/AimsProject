@@ -29,15 +29,7 @@ module AimsProject
       sizer.add_item(topSplitterWindow, :proportion => 1, :flag => EXPAND)
       
       set_sizer(sizer)
-      
-      # The top is a list control
-      @geomList = ListCtrl.new(topSplitterWindow)
-      app.project.geometries.sort{|a,b| a <=> b}.each{|geom|
-        li = ListItem.new
-        li.set_text(File.basename(geom))
-        li.set_data(geom)
-        @geomList.insert_item(li)
-      }
+      @console = GeometryConsole.new(self, topSplitterWindow)
       
       # The bottom is a vertical splitter
       geomWindowSplitter = SplitterWindow.new(topSplitterWindow)
@@ -47,26 +39,17 @@ module AimsProject
       geomWindowSplitter.split_vertically(@geomEditor, @geomViewer)
       
       # Add top and bottom sides together
-      topSplitterWindow.split_horizontally(@geomList, geomWindowSplitter, 100)
+      topSplitterWindow.split_horizontally(geomWindowSplitter, @console, -100)
       layout
       
       # Define events
-      evt_list_item_selected(@geomList) {|evt|
+      evt_list_item_selected(@console) {|evt|
         open_geometry_file(evt.get_item.get_data)
       }
       
+      show_geometry(GeometryFile.new)
       
-    end
-    
-    # Add a geometry with the given name
-    def add_geometry(geometry)
-      @app.project.geometries << geometry
-      li = ListItem.new
-      li.set_text(File.basename(geometry.file))
-      li.set_data(geometry.file)
-      li.set_state(LIST_STATE_SELECTED)
-      @geomList.insert_item(li)
-      @geomList.sort{|a,b| a <=> b}
+      
     end
     
 
@@ -114,7 +97,7 @@ module AimsProject
       begin
         @original_uc = geometry
         @geomViewer.unit_cell = @original_uc
-      rescue AimsProjectException => e
+       rescue AimsProjectException => e
         @app.error_dialog(e)
       ensure
         @geomEditor.unit_cell = @original_uc

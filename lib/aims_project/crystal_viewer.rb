@@ -211,7 +211,7 @@ class CrystalViewer < Wx::Panel
     @unit_cell = uc
     @unit_cell_corrected = nil
 
-    init_clip_planes
+    # init_clip_planes
     
     @unit_cell.add_observer(self, :unit_cell_changed)
 
@@ -223,7 +223,7 @@ class CrystalViewer < Wx::Panel
   end
 
   def init_clip_planes
-
+      
       Thread.new(self) { |evtHandler|
         @unit_cell_corrected = @unit_cell.correct
         evt = ThreadCallbackEvent.new
@@ -475,8 +475,12 @@ class CrystalViewer < Wx::Panel
           @options.y_repeat.times do |j|
             @options.z_repeat.times do |k|
             
-              origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
-
+              origin = if self.unit_cell.lattice_vectors
+                atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
+              else
+                Vector[0, 0, 0]
+              end
+              
               draw_bonds(origin) if @options.show_bonds
               draw_lattice(origin)
             end
@@ -558,20 +562,24 @@ class CrystalViewer < Wx::Panel
     glMatrixMode(GL_MODELVIEW)
 
     glInitNames
-    if self.unit_cell
+    if self.unit_cell 
       atoms = self.unit_cell
       @options.x_repeat.times do |i|
         @options.y_repeat.times do |j|
           @options.z_repeat.times do |k|
             
-            origin = atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
-
+            origin = if self.unit_cell.lattice_vectors
+              atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
+            else
+              Vector[0,0,0]
+            end
+            
             self.draw_lattice(origin)
-            self.draw_clip_planes
           end
         end
       end
     end
+    self.draw_clip_planes
 
     self.picking = false
 

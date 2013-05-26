@@ -21,37 +21,18 @@ class GeometryEditor < Wx::ScrolledWindow
     # Create the button panel (A toolbar for the top of this panel)
     @button_panel = HBoxSizer.new
     
-    @toggle_source = CheckBox.new(self, ID_ANY, "Source")
-    
     basedir = File.dirname(__FILE__)
     arrow_icon = Image.new(File.join(basedir,"green_arrow.jpg"), BITMAP_TYPE_JPEG)
     @eval_button = BitmapButton.new(self, :bitmap => arrow_icon.rescale(16,15).convert_to_bitmap,:style=>BU_EXACTFIT, :name => "evaluate")
     
-    # error_icon = Image.new(File.join(basedir, "red_cross.jpeg"), BITMAP_TYPE_JPEG)
-    # @clear_errors_button = BitmapButton.new(self, :bitmap => error_icon.rescale(16,15).convert_to_bitmap,:style=>BU_EXACTFIT, :name => "Clear Errors")
-    
-    @button_panel.add_item(@toggle_source,1)
-    @button_panel.add_stretch_spacer
     @button_panel.add_item(@eval_button,3)
-    
-    evt_checkbox(@toggle_source) {|evt|
-      if @toggle_source.is_checked
-        @text_ctrl.set_read_only(false)
-        @text_ctrl.set_text(@unit_cell.raw_input)
-      else
-        @text_ctrl.set_read_only(false)
-        @text_ctrl.set_text(@unit_cell.input_geometry)
-        @text_ctrl.set_read_only(true)
-      end
-    }
-    
+        
     sizer.add_item(@button_panel, :flag => EXPAND)
     sizer.add_item(@text_ctrl, :proportion => 1, :flag => EXPAND | ALL, :border => 5)
 
     set_auto_layout(true)
     set_sizer(sizer)
-
-        
+    
     evt_button(@eval_button) {|event|
         self.evaluate
     }
@@ -71,17 +52,7 @@ class GeometryEditor < Wx::ScrolledWindow
   
   def unit_cell=(uc)
     @unit_cell = uc
-    if @toggle_source.is_checked
-      @text_ctrl.set_read_only(false)
-      @text_ctrl.set_text(@unit_cell.raw_input)
-      @text_ctrl.set_read_only(false)
-      
-    else
-      @text_ctrl.set_read_only(false)
-      @text_ctrl.set_text(@unit_cell.input_geometry)
-      @text_ctrl.set_read_only(true)
-      
-    end
+    @text_ctrl.set_text(@unit_cell.input_geometry)      
   end
   
   def select_atom(atom)

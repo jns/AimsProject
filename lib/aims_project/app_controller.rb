@@ -48,51 +48,13 @@ class AppController < Wx::App
         # Initialize the inspector
         @inspector = Inspector.new(self, @frame)
         
-        # Create the notebook
-        @notebook = Notebook.new(@frame)
-        
         # Create the geometry notebook page
-        @geomWindow = GeometryWindow.new(self, @notebook)
-
-        # Create the control window
-        # The base window is a horizontal splitter
-        # Left side is a list of control files
-        # right side is a Rich Text Control
-        controlWindow = SplitterWindow.new(@notebook)
-        @controlList = ListCtrl.new(controlWindow);
-        @controlEditor = RichTextCtrl.new(controlWindow)
-        controlWindow.split_horizontally(@controlList, @controlEditor)
-        
-        # Create the calculations window
-        # Similar to the geometryWindow
-        # Left side is a list control
-        # Right side is a crystal viewer
-        calcWindow = CalculationWindow.new(self, @notebook)
-        
-        # Add windows to the notebook
-        @notebook.add_page(@geomWindow, 'Geometry')
-        @notebook.add_page(controlWindow, "Control")
-        @notebook.add_page(calcWindow, "Calculations")
-        
-        evt_notebook_page_changed(@notebook) {|evt|
-          cp = @notebook.get_current_page
-          if cp.respond_to? :show_inspector
-            @notebook.get_current_page.show_inspector
-          end
-        }
-        
-        # Set the selected notebook page
-        @notebook.set_selection(2)
-        
-        # @tree = ProjectTree.new(self, hsplitter)
+        @geomWindow = GeometryWindow.new(self, @frame)
+        frameSizer = VBoxSizer.new
+        # frameSizer.add_item(@geomWindow, :proportion => 1, :flag => EXPAND)
+        #         @frame.set_sizer(frameSizer)
         @frame.set_menu_bar(menubar)
-        # @toolbar = @frame.create_tool_bar
-        # populate_toolbar(@toolbar) if @toolbar
-                
 
-        # Check off the current tool
-        # set_tool
-        
         # Display
         @frame.show        
    end
@@ -172,6 +134,7 @@ class AppController < Wx::App
    
    # Show the inspector
    def show_inspector
+     @geomWindow.show_inspector
      @inspector.show(true)
    end
    
@@ -210,16 +173,7 @@ class AppController < Wx::App
        puts "Opening #{file}"
 
        @frame.set_title(file)
-       @geomEditor.show
-       @calcTree.hide
-       
-       if (project)
-         erb = ERB.new(File.read(file))
-         show_geometry Aims::GeometryParser.parse_string(erb.result(project.get_binding))
-       else
-         show_geometry Aims::GeometryParser.parse(file)
-       end
-       
+         
        
      rescue Exception => dang
        error_dialog(dang)
@@ -228,23 +182,18 @@ class AppController < Wx::App
    alias_method :open_file, :open_geometry_file
    
    def save_geometry
-     page = @notebook.get_current_page
-     if (page.respond_to? :geometry)  && not(page.geometry.nil?)
-       geometry = @notebook.get_current_page.geometry
-       begin
-         geometry.save
-       rescue Exception => e
-         error_dialog(e)
-       end
-     end     
+     geometry = @geomWindow.geometry
+     begin
+       geometry.save
+     rescue Exception => e
+       error_dialog(e)
+     end
    end
    
    # Save the geometry
    def save_geometry_as
      
-     page = @notebook.get_current_page
-     if (page.respond_to? :geometry)  && not(page.geometry.nil?)
-       geometry = @notebook.get_current_page.geometry
+       geometry = @geomWindow.geometry
        
        fd = TextEntryDialog.new(@frame, :message => "Save Geometry", :caption => "Specify name of geometry:")
        if Wx::ID_OK == fd.show_modal
@@ -256,9 +205,7 @@ class AppController < Wx::App
            error_dialog(e)
          end
        end 
-     else
-       error_dialog("No geometry selected.")
-     end
+
    end
 
    # Display an error dialog for the exception
@@ -275,19 +222,14 @@ class AppController < Wx::App
    def save_image
 
      begin
-       page = @notebook.get_current_page
-       if (page.respond_to? :image) 
-         image = page.image
+         image = @geomWindow.image
          fd = FileDialog.new(@frame, :message => "Save Image", :style => FD_SAVE, :default_dir => @working_dir)
          if Wx::ID_OK == fd.show_modal
            @working_dir = fd.get_directory
             puts "Writing #{fd.get_path}"
             image.mirror(false).save_file(fd.get_path)
           end
-       else
-         error_dialog("Sorry, could not generate an image.")
-       end
-
+       
       rescue Exception => e
         error_dialog(e)
       end

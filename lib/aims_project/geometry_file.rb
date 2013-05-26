@@ -43,7 +43,13 @@ module AimsProject
     # @param input If input is a File, the file is read and evaluated with ERB
     #             If input is a String, the input is directly evaluated with ERB
     # @param _binding The binding to use when evaluating with EB
-    def initialize(input, _binding=nil)
+    def initialize(input = nil, _binding=nil)
+      
+      if input.nil?
+        @raw_input = ""
+        @input_geometry = ""
+        return
+      end
       
       if input.respond_to? :read
         @file = input
@@ -67,12 +73,8 @@ module AimsProject
     # Set the raw input
     # @param str The string to set the raw input to
     # @param notify Whether or not to notify observer. Set this to false if you intend to call evaluate immediately after
-    def raw_input=(str, notify = true)
+    def raw_input=(str)
       @raw_input = str
-      if notify
-        changed
-        notify_observers
-      end
     end
     
     # Evaluate the raw input and return a geometry String formatted in the Aims geometry.in format

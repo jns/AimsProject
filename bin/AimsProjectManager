@@ -14,6 +14,7 @@ require 'aims_project/atom.rb'
 require 'aims_project/inspector.rb'
 require 'aims_project/crystal_viewer.rb'
 require 'aims_project/geometry_editor.rb'
+require 'aims_project/geometry_console.rb'
 require 'aims_project/project_tree.rb'
 require 'aims_project/calculation_tree.rb'
 require 'aims_project/app_controller.rb'
@@ -31,8 +32,8 @@ end
 
 controller.open_file(ARGV[0]) if ARGV[0]
 
-project_obj_files = Dir["*.yaml"]
-controller.project = AimsProject::Project.load(project_obj_files.first) unless project_obj_files.empty?
+# project_obj_files = Dir["*.yaml"]
+# controller.project = AimsProject::Project.load(project_obj_files.first) unless project_obj_files.empty?
 AimsProject::ThreadCallbackEvent.set_event_type(Wx::Event.new_event_type)
 Wx::EvtHandler.register_class(AimsProject::ThreadCallbackEvent, AimsProject::ThreadCallbackEvent.event_type, "evt_thread_callback", 0)
 
