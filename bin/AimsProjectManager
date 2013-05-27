@@ -30,7 +30,6 @@ unless __FILE__.nil?
   controller.working_dir = cwd
 end
 
-controller.open_file(ARGV[0]) if ARGV[0]
 
 # project_obj_files = Dir["*.yaml"]
 # controller.project = AimsProject::Project.load(project_obj_files.first) unless project_obj_files.empty?

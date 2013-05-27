@@ -488,6 +488,7 @@ class CrystalViewer < Wx::Panel
         end
       end
       draw_clip_planes
+    rescue GeometryEvaluationException => e
     rescue AimsProjectException => e
       puts e.message
       puts e.backtrace.join("\n")
@@ -568,6 +569,7 @@ class CrystalViewer < Wx::Panel
         @options.y_repeat.times do |j|
           @options.z_repeat.times do |k|
             
+            # Hack to display non-periodic systems
             origin = if self.unit_cell.lattice_vectors
               atoms.lattice_vectors[0]*i + atoms.lattice_vectors[1]*j + atoms.lattice_vectors[2]*k
             else
@@ -616,8 +618,8 @@ class CrystalViewer < Wx::Panel
     atoms = self.unit_cell
     
     # Find the center of all atoms, not just visible ones.
-    @center = atoms.center unless @center
-
+    @center = Atom.new(0,0,0)
+    
     # Move camera out along z-axis
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()

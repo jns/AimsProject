@@ -171,7 +171,7 @@ class AppController < Wx::App
          end
        end
        puts "Opening #{file}"
-
+       @geomWindow.open_geometry_file(file)
        @frame.set_title(file)
          
        
