@@ -3,9 +3,11 @@ module AimsProject
   class GeometryConsole < Wx::ScrolledWindow
     
     include Wx
+    include Aims
     
     def initialize(app, window)
       super(window)
+      @app = app
       @text_ctrl = RichTextCtrl.new(self)
       sizer = BoxSizer.new(VERTICAL)
       sizer.add_item(@text_ctrl, :proportion => 1, :flag => EXPAND | ALL, :border => 5)
@@ -85,6 +87,19 @@ module AimsProject
     def echo(str)
       @text_ctrl.append_text("\n" + str + "\n")
       prompt
+    end
+    
+    def geometry
+      @app.geometry
+    end
+    
+    def set_geometry(geom)
+      if geom.is_a? Aims::Geometry
+        puts "All Good"
+        @app.show_geometry(GeometryFile.new(geom))
+      else
+        echo("Not a valid geometry object")
+      end
     end
     
   end
