@@ -211,10 +211,11 @@ class CrystalViewer < Wx::Panel
     @unit_cell = uc
     @unit_cell_corrected = nil
 
-    # init_clip_planes
+    init_clip_planes
     
     @unit_cell.add_observer(self, :unit_cell_changed)
-
+    draw_scene
+    
   end
 
   def unit_cell_changed
@@ -618,7 +619,7 @@ class CrystalViewer < Wx::Panel
     atoms = self.unit_cell
     
     # Find the center of all atoms, not just visible ones.
-    @center = Atom.new(0,0,0)
+    @center = atoms.center unless @center
     
     # Move camera out along z-axis
     glMatrixMode(GL_MODELVIEW)
