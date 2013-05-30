@@ -1,5 +1,35 @@
 
 module AimsProject
+  
+  class CommandHistory
+
+    def initialize
+      @history= []
+      @counter = 0
+    end
+
+    def save(cmd)
+      @history.push(cmd)
+      @counter = @history.size
+    end
+    
+    def prev
+      @counter = @history.size unless @counter
+      if @counter > 0
+        @counter = @counter - 1
+      end
+      @history[@counter]
+    end
+    
+    def succ
+      @counter = @history.size unless @counter
+      if @counter < @history.size-1
+        @counter = @counter + 1
+      end
+      @history[@counter]
+    end
+  end
+  
   class GeometryConsole < Wx::ScrolledWindow
     
     include Wx
@@ -9,6 +39,7 @@ module AimsProject
       super(window)
       @app = app
       @text_ctrl = RichTextCtrl.new(self)
+      @history = CommandHistory.new
       sizer = BoxSizer.new(VERTICAL)
       sizer.add_item(@text_ctrl, :proportion => 1, :flag => EXPAND | ALL, :border => 5)
 
@@ -18,22 +49,27 @@ module AimsProject
       
       @text_ctrl.evt_key_down do |evt|
         k = evt.get_key_code
+        caret_pos = @text_ctrl.get_insertion_point
+        
         case k
         when K_UP
-          echo("Key Up")
+          prev = @history.prev
+          @text_ctrl.replace(@line_start, @text_ctrl.get_last_position, prev) if prev
         when K_DOWN
-          echo("Key Down")
+          succ = @history.succ
+          @text_ctrl.replace(@line_start, @text_ctrl.get_last_position, succ ) if succ
         when K_LEFT
-          caret_pos = @text_ctrl.get_insertion_point
           if caret_pos > @line_start
             @text_ctrl.set_insertion_point(caret_pos-1)
           end
         when K_RIGHT
-          caret_pos = @text_ctrl.get_insertion_point
           if caret_pos < @text_ctrl.get_last_position
             @text_ctrl.set_insertion_point(caret_pos+1)
           end          
         else
+          if caret_pos < @line_start
+            @text_ctrl.set_insertion_point(@line_start+1)
+          end
           evt.skip
         end
       end
@@ -43,17 +79,17 @@ module AimsProject
         case k
         when K_RETURN
           cmd = @text_ctrl.get_range(@line_start, @text_ctrl.get_caret_position+1).strip
-          print("\n")
-          
+          @history.save(cmd)
+          print "\n"
           # evaluate
           begin
             result = get_binding.eval(cmd)
-            print(result.to_s + "\n")
-          rescue 
-            print $!.to_s
-            print "\n"
+            result_str = result.to_s
+            print(result_str+"\n") 
+          rescue Exception => e
+            print(e.message + "\n", Wx::RED)
           end
-          
+
           prompt
         when K_HOME # For some reason, ctrl-a maps to this
           @text_ctrl.set_insertion_point(@line_start)
@@ -80,12 +116,15 @@ module AimsProject
       @text_ctrl.show_position(@line_start)
     end
     
-    def print(str)
+    def print(str, color=Wx::BLACK)
+      start = @text_ctrl.get_caret_position
       @text_ctrl.append_text(str)
+      stop = @text_ctrl.get_caret_position
+      @text_ctrl.set_style(start..stop, RichTextAttr.new(color))
     end
     
-    def echo(str)
-      @text_ctrl.append_text("\n" + str + "\n")
+    def echo(str, color=Wx::BLACK)
+      print("\n"+str+"\n", color)
       prompt
     end
     

@@ -41,12 +41,13 @@ class GeometryEditor < Wx::ScrolledWindow
   
   # Apply the edits to the geometry_file and evaluate
   def evaluate
+    
     @unit_cell.raw_input = @text_ctrl.get_text
     begin
       @unit_cell.evaluate    
     rescue 
       # @button_pane.add_item(@clear_errors_button, 3)
-      @text_ctrl.set_text($!.message + $!.backtrace.join("\n"))
+      @app.display_exception($!)
     end
   end
   

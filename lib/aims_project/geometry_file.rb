@@ -172,11 +172,7 @@ module AimsProject
           f.write @raw_input
         }
         
-        if file == @file
-          return self
-        else
-          GeometryFile.new(File.new(file.path, "r"))
-        end
+        return self
         
     end
     

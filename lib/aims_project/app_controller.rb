@@ -184,7 +184,11 @@ class AppController < Wx::App
    def save_geometry
      geometry = @geomWindow.geometry
      begin
-       geometry.save
+       if geometry.file
+         geometry.save
+       else
+         save_geometry_as
+       end
      rescue Exception => e
        error_dialog(e)
      end
@@ -195,12 +199,13 @@ class AppController < Wx::App
      
        geometry = @geomWindow.geometry
        
-       fd = TextEntryDialog.new(@frame, :message => "Save Geometry", :caption => "Specify name of geometry:")
+       fd = FileDialog.new(@frame, :message => "Save Geometry", :style => FD_SAVE, :default_dir => @working_dir)
        if Wx::ID_OK == fd.show_modal
          begin
-           geom_name = fd.get_value
-           new_geom  = geometry.save_as(File.new(File.join(GEOMETRY_DIR, geom_name), "w"))
-           @geomWindow.add_geometry(new_geom)
+           @working_dir = fd.get_directory
+           geom_name = fd.get_path
+           new_geom  = geometry.save_as(geom_name)
+           @geomWindow.show_geometry(new_geom)
          rescue Exception => e
            error_dialog(e)
          end

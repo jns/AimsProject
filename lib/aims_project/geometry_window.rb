@@ -122,6 +122,10 @@ module AimsProject
       @geomEditor.update
     end
     
+    def display_exception(e)
+      @console.echo(e.message, Wx::RED)
+    end
+    
     # Apply UI settings to viewer and re-render
     def update_viewer
       
