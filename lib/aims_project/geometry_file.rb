@@ -93,6 +93,7 @@ module AimsProject
       @aims_geometry
     end
     
+    
     # Delegate calls to the Aims::Geometry object if it exists.
     def method_missing(symbol, *args, &block)
       if @aims_geometry.nil?
@@ -107,7 +108,7 @@ module AimsProject
       begin
         validate
         return true
-      rescue GeometryValidationException => e
+      rescue Exception => e
         return false
       end
     end

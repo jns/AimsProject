@@ -231,7 +231,7 @@ class CrystalViewer < Wx::Panel
         evtHandler.add_pending_event(evt)
       }
     
-      return unless (@unit_cell and @unit_cell.respond_to? :bounding_box) 
+      return unless (@unit_cell and @unit_cell.is_valid?) 
     
       # each bounding box is a 2 element array [max, min]
       bounding_box = @unit_cell.bounding_box(false)

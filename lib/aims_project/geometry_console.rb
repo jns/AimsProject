@@ -54,10 +54,12 @@ module AimsProject
         case k
         when K_UP
           prev = @history.prev
-          @text_ctrl.replace(@line_start, @text_ctrl.get_last_position, prev) if prev
+          @text_ctrl.remove(@line_start, @text_ctrl.get_last_position)
+          @text_ctrl.append_text(prev) if prev
         when K_DOWN
           succ = @history.succ
-          @text_ctrl.replace(@line_start, @text_ctrl.get_last_position, succ ) if succ
+          @text_ctrl.remove(@line_start,@text_ctrl.get_last_position)
+          @text_ctrl.append_text(succ) if succ
         when K_LEFT
           if caret_pos > @line_start
             @text_ctrl.set_insertion_point(caret_pos-1)
@@ -84,8 +86,10 @@ module AimsProject
           # evaluate
           begin
             result = get_binding.eval(cmd)
-            result_str = result.to_s
-            print(result_str+"\n") 
+            if result
+              result_str = result.to_s
+              print(result_str+"\n") 
+            end
           rescue Exception => e
             print(e.message + "\n", Wx::RED)
           end
@@ -112,7 +116,7 @@ module AimsProject
     def prompt
       @text_ctrl.append_text(">> ")
       @text_ctrl.move_end
-      @line_start = @text_ctrl.get_caret_position
+      @line_start = @text_ctrl.get_caret_position + 1
       @text_ctrl.show_position(@line_start)
     end
     
@@ -124,8 +128,14 @@ module AimsProject
     end
     
     def echo(str, color=Wx::BLACK)
-      print("\n"+str+"\n", color)
-      prompt
+      print(str+"\n", color)
+      return nil
+    end
+    
+    def ls(pattern = "*")
+      match = Dir[pattern]
+      print(match.join("\n") + "\n")
+      return nil
     end
     
     def geometry

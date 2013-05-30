@@ -26,7 +26,7 @@ require 'aims_project/crystal_viewer_options.rb'
 controller = AimsProject::AppController.new
 
 unless __FILE__.nil?
-  cwd = File.dirname(File.expand_path("."))
+  cwd = File.expand_path(".")
   controller.working_dir = cwd
 end
 

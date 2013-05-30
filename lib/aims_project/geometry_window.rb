@@ -123,7 +123,7 @@ module AimsProject
     end
     
     def display_exception(e)
-      @console.echo(e.message, Wx::RED)
+      @console.print(e.message, Wx::RED)
     end
     
     # Apply UI settings to viewer and re-render
