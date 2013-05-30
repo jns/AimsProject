@@ -518,7 +518,7 @@ class CrystalViewer < Wx::Panel
   end
 
   def draw_init
-    glClearColor(background.r,background.g,background.b,@options.solid_bg)
+    glClearColor(background.r,background.g,background.b,(@options.solid_bg ? 1.0 : 0.0))
     glEnable(GL_DEPTH_TEST)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
