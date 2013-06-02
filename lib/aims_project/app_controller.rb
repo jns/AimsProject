@@ -38,9 +38,9 @@ class AppController < Wx::App
 
         # This timer will cause the main thread to pass every 2 ms so that other threads
         # can get work done.
-        timer = Wx::Timer.new(self, Wx::ID_ANY)
-        evt_timer(timer.id) {Thread.pass}
-        timer.start(2)
+        # timer = Wx::Timer.new(self, Wx::ID_ANY)
+        # evt_timer(timer.id) {Thread.pass}
+        # timer.start(2)
 
         # Initialize the selection
         @selection = {}

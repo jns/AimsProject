@@ -225,11 +225,11 @@ class CrystalViewer < Wx::Panel
 
   def init_clip_planes
       
-      Thread.new(self) { |evtHandler|
-        @unit_cell_corrected = @unit_cell.correct
-        evt = ThreadCallbackEvent.new
-        evtHandler.add_pending_event(evt)
-      }
+      # Thread.new(self) { |evtHandler|
+        # @unit_cell_corrected = @unit_cell.correct
+      #   evt = ThreadCallbackEvent.new
+      #   evtHandler.add_pending_event(evt)
+      # }
     
       return unless (@unit_cell and @unit_cell.is_valid?) 
     
@@ -762,7 +762,7 @@ class CrystalViewer < Wx::Panel
     return unless self.unit_cell
     
     atoms = if @options.correct
-      @unit_cell_corrected
+      @unit_cell.correct
     else
       @unit_cell
     end
