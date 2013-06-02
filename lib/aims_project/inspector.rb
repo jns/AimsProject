@@ -26,8 +26,9 @@ EOS
   
   def initialize(app, frame)
     
-    super(frame, :style => (CLOSE_BOX | CAPTION | FRAME_FLOAT_ON_PARENT))
-
+    super(frame, :style => (SYSTEM_MENU | CAPTION | FRAME_FLOAT_ON_PARENT))
+    enable_close_button
+    
     @app = app
     
     # Array to track the inspector windows being shown
