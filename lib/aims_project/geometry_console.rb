@@ -1,4 +1,3 @@
-
 module AimsProject
   
   class CommandHistory
@@ -38,7 +37,7 @@ module AimsProject
     def initialize(app, window)
       super(window)
       @app = app
-      @text_ctrl = RichTextCtrl.new(self)
+      @text_ctrl = RichTextCtrl.new(self, :style => Wx::WANTS_CHARS)
       @history = CommandHistory.new
       sizer = BoxSizer.new(VERTICAL)
       sizer.add_item(@text_ctrl, :proportion => 1, :flag => EXPAND | ALL, :border => 5)
