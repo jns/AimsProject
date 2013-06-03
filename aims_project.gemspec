@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.summary =<<-EOF
   This gem simplifies and streamlines the calculation pipeline for FHI-AIMS.
 EOF
-  s.version = "0.3.1"
+  s.version = AimsProject::VERSION
   s.executables = ["AimsProjectManager", "AimsCalc", "AimsProject"]
   s.required_ruby_version = "~>1.9.2"
   s.add_dependency "wxruby-ruby19", "~> 2.0.0"

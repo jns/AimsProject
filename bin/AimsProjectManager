@@ -36,4 +36,18 @@ end
 AimsProject::ThreadCallbackEvent.set_event_type(Wx::Event.new_event_type)
 Wx::EvtHandler.register_class(AimsProject::ThreadCallbackEvent, AimsProject::ThreadCallbackEvent.event_type, "evt_thread_callback", 0)
 
-controller.main_loop
+begin
+  controller.main_loop
+rescue AimsProject::AimsProjectException => ex
+  STDERR.puts ex.message
+rescue => error
+  STDERR.puts
+  STDERR.puts "Sorry, something went wrong. Please send the following information to joshua.shapiro@gmail.com"
+  STDERR.puts
+  STDERR.puts "FILE:  #{__FILE__}"
+  STDERR.puts "VERSION: #{AimsProject::VERSION}"
+  STDERR.puts "ERROR: " + error.message
+  STDERR.print "\t" + error.backtrace.slice(0..5).join("\n\t")
+  STDERR.puts 
+  STDERR.puts 
+end

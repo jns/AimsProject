@@ -6,6 +6,7 @@ require "rubygems"
 require 'aims'
 require 'yaml'
 
+require 'aims_project/version.rb'
 require 'aims_project/project.rb'
 require 'aims_project/calculation.rb'
 require 'aims_project/geometry_file.rb'
@@ -132,8 +133,6 @@ require 'aims_project/aims_project_exception.rb'
 # This command invokes custom tasks in +Capistrano+, a 3rd party tool for automated deployment, 
 # that will upload the calculations to the server and submit them to the queue.
 # 
-
-
 
 module AimsProject
   # Constants
