@@ -1,3 +1,7 @@
+# -*- encoding: utf-8 -*-
+$:.push File.expand_path("../lib", __FILE__)
+require "aims_project/version"
+
 Gem::Specification.new do |s|
   s.author = "Joshua Shapiro"
   s.email = "joshua.shapiro@gmail.com"
