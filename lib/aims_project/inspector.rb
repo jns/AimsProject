@@ -26,7 +26,7 @@ EOS
   
   def initialize(app, frame)
     
-    super(frame, :style => (SYSTEM_MENU | CAPTION | FRAME_FLOAT_ON_PARENT))
+    super(frame, :style => (SYSTEM_MENU | CAPTION | CLOSE_BOX | FRAME_FLOAT_ON_PARENT))
     enable_close_button
     
     @app = app

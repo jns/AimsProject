@@ -33,7 +33,7 @@ class AppController < Wx::App
         self.app_name = "AimsViewer"
         # Create the frame, toolbar and menubar and define event handlers
         size = [1000,700]
-        @frame = Frame.new(nil, -1, "AimsViewer", DEFAULT_POSITION, size)
+        @frame = Frame.new(nil, :title => "AimsViewer", :size => size)
         @statusbar = @frame.create_status_bar
 
         # This timer will cause the main thread to pass every 2 ms so that other threads
@@ -113,7 +113,7 @@ class AppController < Wx::App
        @menubar.append(fileMenu, "File")
        @menubar.append(editMenu, "Edit")
        @menubar.append(viewMenu, "Views")
-       @menubar.append(toolsMenu, "Tools")
+       # @menubar.append(toolsMenu, "Tools")
        
        evt_menu @menubar, :process_menu_event
      end
