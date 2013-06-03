@@ -113,7 +113,7 @@ module AimsProject
     end
     
     def prompt
-      @text_ctrl.append_text(">> ")
+      print(">> ")
       @text_ctrl.move_end
       @line_start = @text_ctrl.get_caret_position + 1
       @text_ctrl.show_position(@line_start)
@@ -124,6 +124,7 @@ module AimsProject
       @text_ctrl.append_text(str)
       stop = @text_ctrl.get_caret_position
       @text_ctrl.set_style(start..stop, RichTextAttr.new(color))
+      
     end
     
     def echo(str, color=Wx::BLACK)

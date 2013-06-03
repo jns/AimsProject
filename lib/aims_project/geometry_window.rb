@@ -111,7 +111,8 @@ module AimsProject
       puts "Selection:" 
       puts @selection[:atoms].each{|a| puts a.format_geometry_in}
       @geomEditor.select_atom(atom)
-      @console.echo(atom.to_s)
+      @console.echo("\n" + atom.to_s)
+      @console.prompt
     end
     
     def nudge_selected_atoms(x,y,z)
